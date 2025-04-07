@@ -135,15 +135,13 @@ TEMPLATE = """
     <table id="tableOptions">
         <tr>
             <th>SSID</th>
-            <th>BSSID</th>
-            <th>Client station</th>
+       
             <th>Password</th>
         </tr>
         {% for p in passwords %}
             <tr>
                 <td data-label="SSID">{{p["ssid"]}}</td>
-                <td data-label="BSSID">{{p["bssid"]}}</td>
-                <td data-label="Client station">{{p["clientStation"]}}</td>
+            
                 <td data-label="Password">{{p["password"]}}</td>
             </tr>
         {% endfor %}
@@ -153,9 +151,9 @@ TEMPLATE = """
 
 class sorted_pwn(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.1'
+    __version__ = '0.0.2'
     __license__ = 'GPL3'
-    __description__ = 'List cracked passwords from wpa-sec and pwncrack'
+    __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
     def __init__(self):
         self.ready = False
@@ -185,20 +183,23 @@ class sorted_pwn(plugins.Plugin):
                             if not line or ":" not in line:
                                 continue
                             fields = line.split(":")
-                            if len(fields) < 4:
+                            if len(fields) < 2:
                                 continue
 
-                            ssid = fields[2]
-                            password = fields[3]
-                            bssid = fields[0]
-                            client = fields[1]
+                            ssid = fields[-2].strip()
+                            password = fields[-1].strip()
+
+                            # ssid = fields[2]
+                            # password = fields[3]
+                            # bssid = fields[0]
+                            # client = fields[1]
 
                             key = (ssid, password)
                             if key not in unique_entries:
                                 unique_entries[key] = {
                                     "ssid": ssid,
-                                    "bssid": bssid,
-                                    "clientStation": client,
+                                    # "bssid": bssid,
+                                    # "clientStation": client,
                                     "password": password
                                 }
 
