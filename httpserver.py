@@ -10,11 +10,11 @@ import pwnagotchi.ui.fonts as fonts
 
 class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self):
-        super().__init__(directory="/handshakes")
+        super().__init__(*args, directory="/home/pi/handshakes", **kwargs)
 
 class HttpServerPlugin(plugins.Plugin):
     __author__ = 'Hades, edited by @avipars'
-    __version__ = '1.0.0.3'
+    __version__ = '1.0.0.4'
     __license__ = 'GPL3'
     __description__ = 'HTTP Server Plugin'
     __github__ = 'https://github.com/itsdarklikehell/pwnagotchi-plugins/blob/master/httpserver.py'
