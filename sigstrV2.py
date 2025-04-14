@@ -13,7 +13,7 @@ TAG = "[SigStrV2 Plugin]"
 
 class SigStrV2(plugins.Plugin):
     __author__ = 'bryzz42o, edited by @avipars'
-    __version__ = '1.0.6.1'
+    __version__ = '1.0.6.2'
     __license__ = 'GPL3'
     __name__ = "SigStrV2"
     __description__ = 'Plugin to display signal strength as a bar.'
@@ -33,7 +33,7 @@ class SigStrV2(plugins.Plugin):
         logging.info(TAG + " Plugin loaded")
         self.timer.start()  # Start the timer when the plugin is loaded
 
-    def on_unload(self):
+    def on_unload(self, ui):
         self.timer.cancel()  # Cancel the timer when the plugin is unloaded
         with ui._lock:
             logging.info(f"[{self.__class__.__name__}] plugin unloaded")
@@ -57,21 +57,66 @@ class SigStrV2(plugins.Plugin):
         self.timer.start()  # Start the timer again
         plugins.notify(f"{TAG} Refreshing signal strength")  # Log a message indicating refresh
 
-    def generate_signal_bar(self, strength):
-        bar_length = int(strength / (100 / self.symbol_count))  # Adjusted to use self.symbol_count
-        bar_segments = '░' * bar_length  # Use to represent filled bar segments (white)
-        empty_segments = '█' * (self.symbol_count - bar_length)  # Use to represent empty bar segments (black)
-        signal_bar = f'|{bar_segments}{empty_segments}|'  # Construct the full signal bar string
+    def generate_signal_bar(self, strength_percent):
+        # Ensure strength is within 0-100
+        strength_percent = max(0, min(100, strength_percent))
+        bar_length = int(strength_percent / (100 / self.symbol_count))
+        # Use different symbols for better visual clarity (optional)
+        filled_char = '█' # Solid block for filled part
+        empty_char = '░'  # Shaded block for empty part
+        bar_segments = filled_char * bar_length
+        empty_segments = empty_char * (self.symbol_count - bar_length)
+        signal_bar = f'|{bar_segments}{empty_segments}|'
         return signal_bar
 
+    # FIX 2: More robust parsing and error handling
     def get_wifi_signal_strength(self):
+        interface = "wlan0" # Make interface configurable? Maybe later.
         try:
-            command_output = subprocess.check_output(["iw", "dev", "wlan0", "link"], stderr=subprocess.DEVNULL).decode("utf-8")
-            signal_strength = int(command_output.split("signal: ")[1].split(" dBm")[0])
-            signal_strength_percent = max(0, min(100, (signal_strength + 100) / 50 * 100))
-            return signal_strength_percent
-        except subprocess.CalledProcessError:
-            logging.error(TAG + " Failed to retrieve signal strength")
+            command = ["iw", "dev", interface, "link"]
+            process = subprocess.run(command, capture_output=True, text=True, check=False, timeout=1) # Use subprocess.run, add timeout
+
+            if process.returncode != 0:
+                # Log stderr if available and useful, otherwise generic message
+                # logging.warning(f"{TAG} 'iw dev {interface} link' command failed with code {process.returncode}. stderr: {process.stderr.strip()}")
+                # This often happens when not associated, which is normal. Don't log as error unless needed.
+                return None # Interface might be down or not associated
+
+            command_output = process.stdout
+
+            if "Not connected" in command_output:
+                # logging.debug(TAG + f" Interface {interface} not connected.")
+                return None # Clearly not connected
+
+            if "signal:" in command_output:
+                try:
+                    signal_part = command_output.split("signal:")[1]
+                    dbm_part = signal_part.split(" dBm")[0].strip()
+                    signal_strength_dbm = int(dbm_part)
+
+                    # Convert dBm to percentage (common mapping: -90dBm=0%, -40dBm=100%)
+                    # Adjust the range (-90, -40) if needed based on observations
+                    clamped_dbm = max(-90, min(signal_strength_dbm, -40))
+                    percentage = (clamped_dbm + 90) * 2 # Maps 50dB range to 0-100%
+
+                    # Ensure percentage is strictly within 0-100
+                    percentage = max(0, min(100, percentage))
+
+                    return percentage
+
+                except (IndexError, ValueError) as parse_err:
+                    logging.warning(TAG + f" Could not parse signal strength from 'iw' output: {parse_err}. Output: {command_output}")
+                    return None # Parsing failed
+            else:
+                # logging.debug(TAG + f" 'signal:' not found in 'iw dev {interface} link' output (normal if not associated).")
+                return None # No signal information found
+
+        except FileNotFoundError:
+            logging.error(TAG + " 'iw' command not found. Is 'iw' package installed?")
             return None
+        except subprocess.TimeoutExpired:
+             logging.warning(TAG + f" 'iw dev {interface} link' command timed out.")
+             return None
         except Exception as e:
-            logging.error(TAG + str(e) + " General Error")
+            logging.error(TAG + f" Unexpected error getting signal strength: {e}", exc_info=True) # Log full traceback for unexpected errors
+            return None
