@@ -7,15 +7,14 @@ from pwnagotchi.ui.components import LabeledValue
 from pwnagotchi.ui.view import BLACK
 import pwnagotchi.ui.fonts as fonts
 
-DIRECTORY = "/home/pi/handshakes"
 
 class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self):
-        super().__init__(directory=DIRECTORY)
+        super().__init__(directory="/home/pi/handshakes/")
 
 class HttpServerPlugin(plugins.Plugin):
     __author__ = 'Hades, edited by @avipars'
-    __version__ = '1.0.0.2'
+    __version__ = '1.0.0.3'
     __license__ = 'GPL3'
     __description__ = 'HTTP Server Plugin'
     __github__ = 'https://github.com/itsdarklikehell/pwnagotchi-plugins/blob/master/httpserver.py'

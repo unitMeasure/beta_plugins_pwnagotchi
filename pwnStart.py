@@ -4,7 +4,7 @@ from pwnagotchi.utils import StatusFile
 
 class pwnStart(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.2'
+    __version__ = '0.0.3'
     __license__ = 'GPL3'
     __name__ = 'pwnStart'
     __description__ = 'A plugin to disable auto_tune and fix_services, then enable probenpwn extensions'
@@ -14,7 +14,6 @@ class pwnStart(plugins.Plugin):
     }
     def __init__(self):
         self.running = False
-        self.status = StatusFile('/var/log/pwnagotchi/pwnStart.status', data={'enabled': False})
         logging.debug("[pwnStart] plugin initialized")
     
     def on_loaded(self):
