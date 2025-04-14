@@ -13,11 +13,13 @@ import pwnagotchi.ui.fonts as fonts
 import pwnagotchi.plugins as plugins
 from scapy.all import *
 
-class EvilPortal(plugins.Plugin):
+class CaPortal(plugins.Plugin):
     __author__ = 'avipars'
     __version__ = '0.0.0.1'
     __license__ = 'GPL3'
     __description__ = 'A plugin that creates evil captive portals.'
+    __github__ = 'https://github.com/avipars'
+    __name__ = "CaPortal"
     __defaults__ = {
         "enabled": False,
     }
@@ -25,7 +27,7 @@ class EvilPortal(plugins.Plugin):
         "apt": [ "hostapd", "dnsmasq", "apache2", "php", "libapache2-mod-php"],
         "pip": ["scapy"],
     }
-
+    # inspired by https://github.com/hacefresko/CaPortal/blob/master/raspberry_run.py
     def __init__(self):
         self.running = False
         self.interfaces = []
@@ -36,7 +38,7 @@ class EvilPortal(plugins.Plugin):
         self.hostapd_running = False
         self.deauth_running = False
         self.deauth_thread = None
-        self.temp_folder = '/tmp/evilportal'
+        self.temp_folder = '/tmp/CaPortal'
         self.hostapd_conf = os.path.join(self.temp_folder, 'hostapd.conf')
         self.dnsmasq_conf = os.path.join(self.temp_folder, 'dnsmasq.conf')
         self.hostapd_log = os.path.join(self.temp_folder, 'hostapd.log')
@@ -67,25 +69,25 @@ class EvilPortal(plugins.Plugin):
 
     def on_webhook(self, path, request):
         if not path or path == "/":
-            return "Evil Portal Plugin"
+            return "Portal Plugin"
         
         if path == "/start":
             if self.running:
-                return "Evil Portal is already running"
+                return "Portal is already running"
             
             mode = request.args.get("mode", "rogue")
             try:
                 self.start_portal(mode)
-                return "Evil Portal started in {} mode".format(mode)
+                return "Portal started in {} mode".format(mode)
             except Exception as e:
                 return "Error starting portal: {}".format(str(e))
         
         elif path == "/stop":
             if not self.running:
-                return "Evil Portal is not running"
+                return "Portal is not running"
             
             self.stop_portal()
-            return "Evil Portal stopped"
+            return "Portal stopped"
         
         elif path == "/status":
             status = {
@@ -146,7 +148,7 @@ class EvilPortal(plugins.Plugin):
         if not self.running:
             return
             
-        logging.info("[caportal] Stopping Evil Portal")
+        logging.info("[caportal] Stopping Portal")
         
         # Stop deauth
         if self.deauth_running and self.deauth_thread:
