@@ -1,3 +1,4 @@
+import os
 import logging
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 import pwnagotchi
@@ -9,8 +10,18 @@ import pwnagotchi.ui.fonts as fonts
 
 
 class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
-    def __init__(self):
-        super().__init__(*args, directory="/home/pi/handshakes", **kwargs)
+    def translate_path(self, path):
+        # Serve files from 
+        base_path = "/home/pi/handshakes"
+        # Get the original path
+        path = super().translate_path(path)
+        # Replace the server root with our base path
+        relpath = os.path.relpath(path, os.getcwd())
+        fullpath = os.path.join(base_path, relpath)
+        return fullpath
+
+    def log_message(self, format, *args):
+        logging.info(f"[HttpServerPlugin] {self.client_address[0]} - {format % args}")
 
 class HttpServerPlugin(plugins.Plugin):
     __author__ = 'Hades, edited by @avipars'
