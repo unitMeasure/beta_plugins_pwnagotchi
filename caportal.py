@@ -7,11 +7,11 @@ import logging
 import subprocess
 import json
 import random
-from scapy.all import *
 from pwnagotchi.ui.components import LabeledValue
 from pwnagotchi.ui.view import BLACK
 import pwnagotchi.ui.fonts as fonts
 import pwnagotchi.plugins as plugins
+from scapy.all import *
 
 class EvilPortal(plugins.Plugin):
     __author__ = 'avipars'
@@ -264,7 +264,7 @@ class EvilPortal(plugins.Plugin):
             "Airport_Free_WiFi",
             "PublicWiFi",
             "McDonald's Free WiFi",
-            "Guest WiFi"
+            "Guest WiFi",
         ]
         
         # Choose a random one
