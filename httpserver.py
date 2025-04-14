@@ -10,7 +10,7 @@ import pwnagotchi.ui.fonts as fonts
 
 class MyHTTPRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self):
-        super().__init__(directory="/home/pi/handshakes/")
+        super().__init__(directory="/handshakes")
 
 class HttpServerPlugin(plugins.Plugin):
     __author__ = 'Hades, edited by @avipars'

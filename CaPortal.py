@@ -15,7 +15,7 @@ from scapy.all import *
 
 class CaPortal(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.0.1'
+    __version__ = '0.0.0.2'
     __license__ = 'GPL3'
     __description__ = 'A plugin that creates evil captive portals.'
     __github__ = 'https://github.com/avipars'
@@ -48,18 +48,22 @@ class CaPortal(plugins.Plugin):
 
     def on_loaded(self):
         logging.info("[caportal] plugin loaded")
-        
-        # Create temp folder if not exists
-        if not os.path.exists(self.temp_folder):
-            os.makedirs(self.temp_folder)
-        
-        # Check for web root folder
-        if not os.path.exists(self.web_folder):
-            os.makedirs(self.web_folder)
+        try:
+            # Create temp folder if not exists
+            if not os.path.exists(self.temp_folder):
+                os.makedirs(self.temp_folder)
+            
+            # Check for web root folder
+            if not os.path.exists(self.web_folder):
+                os.makedirs(self.web_folder)
+
+        except Exception as e:
+            logging.error(f"[caportal] error {str(e)}")
 
     def on_ui_setup(self, ui):
-        # Add a small indicator to the UI
-        ui.add_element('caportal', LabeledValue(color=BLACK, label='', value='', position=(0, 95), label_font=fonts.Bold, text_font=fonts.Medium))
+        with ui._lock:
+            # Add a small indicator to the UI
+            ui.add_element('caportal', LabeledValue(color=BLACK, label='', value='', position=(0, 95), label_font=fonts.Bold, text_font=fonts.Medium))
 
     def on_ui_update(self, ui):
         if self.running:
@@ -67,44 +71,152 @@ class CaPortal(plugins.Plugin):
         else:
             ui.set('caportal', "EP:OFF")
 
-    def on_webhook(self, path, request):
-        if not path or path == "/":
-            return "Portal Plugin"
-        
-        if path == "/start":
-            if self.running:
-                return "Portal is already running"
+def on_webhook(self, path, request):
+    if not path or path == "/":
+        # Return a full HTML page with buttons instead of just text
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Portal Plugin</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                h1 {
+                    color: #333;
+                }
+                .button-row {
+                    margin: 20px 0;
+                }
+                button {
+                    background-color: #4CAF50;
+                    border: none;
+                    color: white;
+                    padding: 10px 20px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    margin: 4px 2px;
+                    cursor: pointer;
+                    border-radius: 4px;
+                }
+                button.stop {
+                    background-color: #f44336;
+                }
+                button.status {
+                    background-color: #2196F3;
+                }
+                .mode-select {
+                    margin: 20px 0;
+                }
+                select {
+                    padding: 8px;
+                    font-size: 16px;
+                }
+                #status-display {
+                    background-color: #f1f1f1;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin-top: 20px;
+                    white-space: pre-wrap;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Portal Plugin Control Panel</h1>
             
-            mode = request.args.get("mode", "rogue")
-            try:
-                self.start_portal(mode)
-                return "Portal started in {} mode".format(mode)
-            except Exception as e:
-                return "Error starting portal: {}".format(str(e))
-        
-        elif path == "/stop":
-            if not self.running:
-                return "Portal is not running"
+            <div class="mode-select">
+                <label for="mode">Select Mode:</label>
+                <select id="mode">
+                    <option value="rogue">Rogue</option>
+                    <option value="captive">Captive</option>
+                    <option value="evil_twin">Evil Twin</option>
+                </select>
+            </div>
             
-            self.stop_portal()
-            return "Portal stopped"
-        
-        elif path == "/status":
-            status = {
-                "running": self.running,
-                "hostapd": self.hostapd_running,
-                "dnsmasq": self.dnsmasq_running,
-                "deauth": self.deauth_running,
-                "interface": self.interface,
-                "monitor_interface": self.monitor_interface,
-                "target_ap": self.target_ap
-            }
-            return json.dumps(status)
-        
-        return "Unknown command"
+            <div class="button-row">
+                <button onclick="startPortal()">Start Portal</button>
+                <button class="stop" onclick="stopPortal()">Stop Portal</button>
+                <button class="status" onclick="checkStatus()">Check Status</button>
+            </div>
+            
+            <div id="status-display">Status: Idle</div>
+            
+            <script>
+                function startPortal() {
+                    const mode = document.getElementById('mode').value;
+                    fetch(`/start?mode=${mode}`)
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('status-display').textContent = data;
+                        });
+                }
+                
+                function stopPortal() {
+                    fetch('/stop')
+                        .then(response => response.text())
+                        .then(data => {
+                            document.getElementById('status-display').textContent = data;
+                        });
+                }
+                
+                function checkStatus() {
+                    fetch('/status')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('status-display').textContent = JSON.stringify(data, null, 2);
+                        });
+                }
+                
+                // Check status on page load
+                checkStatus();
+            </script>
+        </body>
+        </html>
+        """
+        return html
+
+    if path == "/start":
+        if self.running:
+            return "Portal is already running"
+            
+        mode = request.args.get("mode", "rogue")
+        try:
+            self.start_portal(mode)
+            return "Portal started in {} mode".format(mode)
+        except Exception as e:
+            return "Error starting portal: {}".format(str(e))
+            
+    elif path == "/stop":
+        if not self.running:
+            return "Portal is not running"
+            
+        self.stop_portal()
+        return "Portal stopped"
+            
+    elif path == "/status":
+        status = {
+            "running": self.running,
+            "hostapd": self.hostapd_running,
+            "dnsmasq": self.dnsmasq_running,
+            "deauth": self.deauth_running,
+            "interface": self.interface,
+            "monitor_interface": self.monitor_interface,
+            "target_ap": self.target_ap
+        }
+        return json.dumps(status)
+            
+    return f"Unknown command for path {path}"
 
     def on_unload(self, ui):
         self.stop_portal()
+        with ui._lock:
+            ui.remove_element('caportal')
 
     def on_internet_available(self, agent):
         pass
