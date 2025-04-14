@@ -3,7 +3,6 @@ import json
 import os
 import glob
 
-import pwnagotchi
 import pwnagotchi.plugins as plugins
 
 from flask import abort
@@ -135,13 +134,11 @@ TEMPLATE = """
     <table id="tableOptions">
         <tr>
             <th>SSID</th>
-       
             <th>Password</th>
         </tr>
         {% for p in passwords %}
             <tr>
                 <td data-label="SSID">{{p["ssid"]}}</td>
-            
                 <td data-label="Password">{{p["password"]}}</td>
             </tr>
         {% endfor %}
@@ -186,9 +183,12 @@ class sorted_pwn(plugins.Plugin):
                             if len(fields) < 2:
                                 continue
 
+                            # to deal with both pwncrack and wpa-sec format
                             ssid = fields[-2].strip()
                             password = fields[-1].strip()
 
+                            # TODO: figure out a good way to show both pwncrack and wpa-sec additional info without issues
+                            
                             # ssid = fields[2]
                             # password = fields[3]
                             # bssid = fields[0]
