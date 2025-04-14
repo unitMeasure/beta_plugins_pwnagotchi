@@ -1,10 +1,9 @@
 import logging
 import pwnagotchi.plugins as plugins
-from pwnagotchi.utils import StatusFile
 
 class pwnStart(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.3'
+    __version__ = '0.0.4'
     __license__ = 'GPL3'
     __name__ = 'pwnStart'
     __description__ = 'A plugin to disable auto_tune and fix_services, then enable probenpwn extensions'
@@ -19,9 +18,6 @@ class pwnStart(plugins.Plugin):
     def on_loaded(self):
         logging.info("[pwnStart] plugin loaded")
         self.running = True
-        
-        # Update status file
-        self.status.update(data={'enabled': True})
         
         try: 
             # Disable auto_tune
@@ -60,10 +56,7 @@ class pwnStart(plugins.Plugin):
     def on_unload(self, ui):
         logging.info("[pwnStart] plugin unloaded")
         self.running = False
-        self.status.update(data={'enabled': False})
     
     def on_webhook(self, path, request):
         # Optional: add a webhook to check status or toggle settings
-        if request.method == 'GET' and path == '/plugins/pwnStart/status':
-            return {'enabled': self.running}
-        return None
+        return {'enabled': self.running}
