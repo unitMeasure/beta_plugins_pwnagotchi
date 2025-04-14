@@ -4,7 +4,7 @@ from pwnagotchi.utils import StatusFile
 
 class pwnStart(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.0.1'
+    __version__ = '0.0.1'
     __license__ = 'GPL3'
     __name__ = 'pwnStart'
     __description__ = 'A plugin to disable auto_tune and fix_services, then enable probenpwn extensions'
