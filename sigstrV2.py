@@ -13,7 +13,7 @@ TAG = "[SigStrV2 Plugin]"
 
 class SigStrV2(plugins.Plugin):
     __author__ = 'bryzz42o, edited by @avipars'
-    __version__ = '1.0.6.2'
+    __version__ = '1.0.6.3'
     __license__ = 'GPL3'
     __name__ = "SigStrV2"
     __description__ = 'Plugin to display signal strength as a bar.'
@@ -71,7 +71,7 @@ class SigStrV2(plugins.Plugin):
 
     # FIX 2: More robust parsing and error handling
     def get_wifi_signal_strength(self):
-        interface = "wlan0" # Make interface configurable? Maybe later.
+        interface = "wlan0mon" # Make interface configurable? Maybe later.
         try:
             command = ["iw", "dev", interface, "link"]
             process = subprocess.run(command, capture_output=True, text=True, check=False, timeout=1) # Use subprocess.run, add timeout
