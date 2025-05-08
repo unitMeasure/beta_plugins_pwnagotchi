@@ -1,4 +1,3 @@
-#if save_logs requires creating a folder for this plugin, and then in config.toml set main.plugins.NoGPSPrivacy.pn_output_path = "your/path"
 import logging
 import os
 
@@ -13,7 +12,7 @@ class probeReq(plugins.Plugin):
     __author__ = "avipars"
     __version__ = "0.0.0.3"
     __license__ = "GPL3"
-    __description__ = "BETA Listens for Wi-Fi probe requests and displays them on screen"
+    __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
     __defaults__ = {
         "enabled": False,
