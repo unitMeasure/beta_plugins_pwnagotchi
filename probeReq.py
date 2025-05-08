@@ -11,7 +11,7 @@ from pwnagotchi.bettercap import Client
 class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
-    __version__ = "0.0.0.1"
+    __version__ = "0.0.0.2"
     __license__ = "GPL3"
     __description__ = "BETA Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
@@ -53,8 +53,8 @@ class probeReq(plugins.Plugin):
 
     def on_bcap_wifi_client_probe(self, agent, event):
         """WIFI CLIENT PROBE REQUEST"""
-        probe = event['data']["essid"]
-        self.status = "Probe: %s" % probe
+        probe = event['data']
+        self.status = "Probe: %s" % probe['essid']
         logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
     def on_unload(self, ui):
