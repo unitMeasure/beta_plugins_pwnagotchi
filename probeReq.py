@@ -11,7 +11,7 @@ from pwnagotchi.bettercap import Client
 class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
-    __version__ = "0.0.0.2"
+    __version__ = "0.0.0.3"
     __license__ = "GPL3"
     __description__ = "BETA Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
@@ -23,7 +23,7 @@ class probeReq(plugins.Plugin):
         self.ready = False
         self.title = ""
         self.running = True
-        self.status = "Waiting..."
+        self.pr_status = "Waiting..."
 
     def on_loaded(self):
         logging.info(f"[{self.__class__.__name__}] plugin loaded")
@@ -35,7 +35,7 @@ class probeReq(plugins.Plugin):
         try:
             pos = (1, 76)
             ui.add_element(
-                "status",
+                "pr_status",
                 LabeledValue(
                     color=BLACK,
                     label="",
@@ -49,19 +49,19 @@ class probeReq(plugins.Plugin):
             logging.debug(f"[{self.__class__.__name__}]: Error on_ui_setup: {e}")
 
     def on_ui_update(self, ui):
-        ui.set("status", "%s" % (self.status))
+        ui.set("pr_status", "%s" % (self.status))
 
     def on_bcap_wifi_client_probe(self, agent, event):
         """WIFI CLIENT PROBE REQUEST"""
         probe = event['data']
-        self.status = "Probe: %s" % probe['essid']
+        self.pr_status = "Probe: %s" % probe['essid']
         logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
     def on_unload(self, ui):
         self.running = False
         with ui._lock:
             try:
-                ui.remove_element("status")
+                ui.remove_element("pr_status")
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
