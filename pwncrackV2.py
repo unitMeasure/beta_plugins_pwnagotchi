@@ -7,11 +7,11 @@ import pwnagotchi.plugins as plugins
 from pwnagotchi.ui.components import LabeledValue
 from pwnagotchi.ui.view import BLACK
 import pwnagotchi.ui.fonts as fonts
-from pwnagotchi.utils import emove_whitelisted
+from pwnagotchi.utils import remove_whitelisted
 
 class pwncrackV2(plugins.Plugin):
     __author__ = 'Terminatoror (edited by avipars)'
-    __version__ = '1.0.1.1'
+    __version__ = '1.0.1.2'
     __license__ = 'GPL3'
     __description__ = 'Converts .pcap files to .hc22000 and uploads them to pwncrack.org when internet is available.'
     __github__ = "https://github.com/Terminatoror/pwncrack-addons"
