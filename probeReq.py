@@ -47,7 +47,7 @@ class probeReq(plugins.Plugin):
             logging.debug(f"[{self.__class__.__name__}]: Error on_ui_setup: {e}")
 
     def on_ui_update(self, ui):
-        ui.set("pr_status", "%s" % (self.status))
+        ui.set("pr_status", "%s" % (self.pr_status))
 
     def on_bcap_wifi_client_probe(self, agent, event):
         """WIFI CLIENT PROBE REQUEST"""
