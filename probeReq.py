@@ -1,6 +1,4 @@
 import logging
-import os
-
 import pwnagotchi.plugins as plugins
 import pwnagotchi.ui.fonts as fonts
 from pwnagotchi.ui.components import LabeledValue
@@ -10,12 +8,13 @@ from pwnagotchi.bettercap import Client
 class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
-    __version__ = "0.0.0.3"
+    __editor__ = 'avipars'
+    __version__ = "0.0.0.4"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
     __defaults__ = {
-        "enabled": False,
+        "enabled": False
     }
 
     def __init__(self):
