@@ -52,7 +52,11 @@ class probeReq(plugins.Plugin):
     def on_bcap_wifi_client_probe(self, agent, event):
         """WIFI CLIENT PROBE REQUEST"""
         probe = event['data']
-        self.pr_status = "Probe: %s" % probe['essid']
+        if 'verbose' in self.options and self.options['verbose']:
+            self.pr_status = "Probe: %s mac: %s rssi: %s" % (probe['essid'], probe['mac'], probe["rssi"])
+        else:
+            self.pr_status = "Probe: %s" % probe['essid']
+            
         logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
     def on_unload(self, ui):
