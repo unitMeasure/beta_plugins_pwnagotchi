@@ -11,7 +11,8 @@ from PIL import ImageFont
 
 # https://github.com/Sniffleupagus/pwnagotchi_plugins/blob/main/console.py
 class better_console(plugins.Plugin):
-    __author__ = 'Sniffleupagus (edited by avipars)'
+    __author__ = 'Sniffleupagus'
+    __editor__ = 'avipars'
     __version__ = '1.0.0.1'
     __license__ = 'GPL3'
     __description__ = 'An improved console scrolling status updates'
@@ -84,78 +85,20 @@ class better_console(plugins.Plugin):
 
         ui.set('pwn-console', '\n'.join(self._console[:self.options['showLines']]))
 
-    # called when the hardware display setup is done, display is an hardware specific object
-    def on_display_setup(self, display):
-        pass
 
     # called when everything is ready and the main loop is about to start
     def on_ready(self, agent):
         self._agent = agent
         self.addConsole("Ready to pwn")
 
-    # called when a non overlapping wifi channel is found to be free
-    def on_free_channel(self, agent, channel):
-        pass
-
-    # called when the status is set to bored
-    def on_bored(self, agent):
-        pass
-
-    # called when the status is set to sad
-    def on_sad(self, agent):
-        pass
-
-    # called when the status is set to excited
-    def on_excited(self, agent):
-        pass
-
-    # called when the status is set to lonely
-    def on_lonely(self, agent):
-        pass
-
     # called when the agent is rebooting the board
     def on_rebooting(self, agent):
         self.addConsole("Rebooting.")
-
-    # called when the agent is waiting for t seconds
-    def on_wait(self, agent, t):
-        pass
-
-    # called when the agent is sleeping for t seconds
-    def on_sleep(self, agent, t):
-        pass
-
-    # called when the agent refreshed its access points list
-    def on_wifi_update(self, agent, access_points):
-        pass
-
-    # called when the agent refreshed an unfiltered access point list
-    # this list contains all access points that were detected BEFORE filtering
-    def on_unfiltered_ap_list(self, agent, access_points):
-        pass
-
-    # called when the agent is sending an association frame
-    def on_association(self, agent, access_point):
-        #self.addConsole("A->%s" % (access_point['hostname']))
-        pass
-
-    # called when the agent is deauthenticating a client station from an AP
-    def on_deauthentication(self, agent, access_point, client_station):
-        #self.addConsole("D->%s %s" % (access_point['hostname'], client_station['hostname']))
-        pass
-
-    # callend when the agent is tuning on a specific channel
-    def on_channel_hop(self, agent, channel):
-        pass
 
     # called when a new handshake is captured, access_point and client_station are json objects
     # if the agent could match the BSSIDs to the current list, otherwise they are just the strings of the BSSIDs
     def on_handshake(self, agent, filename, access_point, client_station):
         self.addConsole("H->%s" % (access_point.get('hostname', "???")))
-
-    # called when an epoch is over (where an epoch is a single loop of the main algorithm)
-    def on_epoch(self, agent, epoch, epoch_data):
-        pass
 
     # called when a new peer is detected
     def on_peer_detected(self, agent, peer):

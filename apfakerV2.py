@@ -12,8 +12,9 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 class APFakerV2(plugins.Plugin):
     __name__ = "APFakerV2"
-    __author__ = '33197631+dadav@users.noreply.github.com edited by avipars'
-    __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfakerv2.py"
+    __author__ = '33197631+dadav@users.noreply.github.com'
+    __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"
+    __editor__ = 'avipars'
     __version__ = '2.0.5.2'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps, now with minor improvements'
@@ -80,8 +81,6 @@ class APFakerV2(plugins.Plugin):
 
         self.ready = True
         logging.info('[apfakerv2] plugin loaded')
-        # self.add_to_ignore_list(self.ssids)
-
 
     def on_ready(self, agent):
         if not self.ready:
@@ -126,31 +125,3 @@ class APFakerV2(plugins.Plugin):
                 ui.remove_element('apfake')
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
-
-    # def add_to_ignore_list(self, ssids):
-    #     """Dynamically adds fake SSIDs to Pwnagotchi's ignore list."""
-    #     config_path = "/etc/pwnagotchi/config.toml"
-
-    #     try:
-    #         with open(config_path, "r") as file:
-    #             config_lines = file.readlines()
-
-    #         ignore_list_found = False
-    #         for i, line in enumerate(config_lines):
-    #             if "main.whitelist" in line:
-    #                 ignore_list_found = True
-    #                 existing_ssids = line.split("=")[1].strip().strip('[]"').split(", ")
-    #                 new_ssids = list(set(existing_ssids + ssids))  # Avoid duplicates
-    #                 config_lines[i] = f'main.whitelist = {new_ssids}\n'
-    #                 break
-
-    #         if not ignore_list_found:
-    #             config_lines.append(f'\nmain.whitelist = {ssids}\n')
-
-    #         with open(config_path, "w") as file:
-    #             file.writelines(config_lines)
-
-    #         logging.info("[apfakerv2] Added fake APs to ignore list")
-
-    #     except Exception as e:
-    #         logging.error(f"[apfakerv2] Failed to update ignore list: {e}")
