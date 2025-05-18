@@ -11,11 +11,10 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 
 class APFakerV2(plugins.Plugin):
-    __name__ = "APFakerV2"
     __author__ = '33197631+dadav@users.noreply.github.com'
     __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"
     __editor__ = 'avipars'
-    __version__ = '2.0.5.2'
+    __version__ = '2.0.5.3'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps, now with minor improvements'
     __dependencies__ = {
@@ -105,12 +104,9 @@ class APFakerV2(plugins.Plugin):
 
         main_config = agent.config()
 
-        while not self.shutdown:
+        while self.ready:
             sendp(frames, iface=main_config['main']['iface'], verbose=False)
             sleep(max(0.1, len(frames) / 100))
-
-    def on_before_shutdown(self):
-        self.shutdown = True
 
     def on_ui_setup(self, ui):
         with ui._lock:
@@ -118,10 +114,9 @@ class APFakerV2(plugins.Plugin):
                            label_font=fonts.Bold, text_font=fonts.Medium))
 
     def on_unload(self, ui):
-        self.ready = False
-        self.shutdown = True
         with ui._lock:
             try:
                 ui.remove_element('apfake')
+                self.ready = False
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
