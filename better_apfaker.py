@@ -1,4 +1,3 @@
-# https://github.com/MikelCalvo/pwnagotchi-plugins/blob/master/better_apfaker.py
 import os
 import logging
 
@@ -12,9 +11,10 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 
 class Better_APFaker(plugins.Plugin):
-    __GitHub__ = ""
-    __author__ = "(edited by: itsdarklikehell bauke.molenaar@gmail.com), 33197631+dadav@users.noreply.github.com"
-    __version__ = "2.0.5.1"
+    __GitHub__ = "https://github.com/itsdarklikehell/pwnagotchi-plugins/blob/master/better_apfaker.py"
+    __author__ = "33197631+dadav@users.noreply.github.com"
+    __editor__ = "(edited by: itsdarklikehell bauke.molenaar@gmail.com), avipars"
+    __version__ = "2.0.5.2"
     __license__ = "GPL3"
     __description__ = "Creates fake aps."
     __name__ = "Better_APFaker"
@@ -35,7 +35,6 @@ class Better_APFaker(plugins.Plugin):
     def __init__(self):
         self.ready = False
         logging.debug(f"[{self.__class__.__name__}] plugin init")
-        self.shutdown = False
         self.stop = False
 
     @staticmethod
@@ -106,28 +105,29 @@ class Better_APFaker(plugins.Plugin):
         frames = list()
         for idx, ssid in enumerate(self.ssids[: self.options["max"]]):
             try:
-                logging.info(
-                    f'[{self.__class__.__name__}] creating fake ap with ssid "%s"', ssid
-                )
-                frames.append(
-                    Better_APFaker.create_beacon(
-                        ssid, password_protected=self.options["password_protected"]
+                if not self.stop:
+                    logging.info(
+                        f'[{self.__class__.__name__}] creating fake ap with ssid "%s"', ssid
                     )
-                )
-                agent.view().set("apfake", str(idx + 1))
+                    frames.append(
+                        Better_APFaker.create_beacon(
+                            ssid, password_protected=self.options["password_protected"]
+                        )
+                    )
+                    agent.view().set("apfake", str(idx + 1))
             except Exception as ex:
+                self.stop = True
                 logging.debug(f"[{self.__class__.__name__}] %s", ex)
 
         main_config = agent.config()
         logging.info(f"[{self.__class__.__name__}] plugin ready")
 
-        while not self.shutdown and not self.stop:
+        while not self.stop:
             sendp(frames, iface=main_config["main"]["iface"], verbose=False)
             sleep(max(0.1, len(frames) / 100))
 
     def on_before_shutdown(self):
         self.stop = True
-        self.shutdown = True
 
     def on_ui_setup(self, ui):
         with ui._lock:
@@ -147,7 +147,6 @@ class Better_APFaker(plugins.Plugin):
         with ui._lock:
             try:
                 self.stop = True
-                self.shutdown = True
                 ui.remove_element("apfake")
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
