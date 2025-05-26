@@ -10,11 +10,11 @@ from time import sleep
 from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 
-class APFakerV2(plugins.Plugin):
+class apfakerV2(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"
     __editor__ = 'avipars'
-    __version__ = '2.0.5.3'
+    __version__ = '2.0.5.4'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps, now with minor improvements'
     __dependencies__ = {
@@ -22,7 +22,7 @@ class APFakerV2(plugins.Plugin):
     }
     __defaults__ = {
         'enabled': False,
-        'ssids': ['5G TEST CELL TOWER'],
+        'ssids': ['5G TEST CELL TOWER', 'FBI Van', 'NSA Surveillance Van', 'CIA Listening Post', 'FBI Surveillance Van'],
         'max': 5,
         'repeat': True,
         'password_protected': False,
@@ -31,7 +31,6 @@ class APFakerV2(plugins.Plugin):
     def __init__(self):
         self.options = dict()
         self.ready = False
-        self.shutdown = False
 
     @staticmethod
     def create_beacon(name, password_protected=False):
@@ -70,16 +69,16 @@ class APFakerV2(plugins.Plugin):
                     with open(path) as wordlist:
                         self.ssids = wordlist.read().split()
                 except OSError as oserr:
-                    logging.error('[apfakerv2] %s', oserr)
+                    logging.error('[apfakerV2] %s', oserr)
                     return
         elif isinstance(self.options['ssids'], list):
             self.ssids = self.options['ssids']
         else:
-            logging.error('[apfakerv2] wtf is %s', self.options['ssids'])
+            logging.error('[apfakerV2] wtf is %s', self.options['ssids'])
             return
 
         self.ready = True
-        logging.info('[apfakerv2] plugin loaded')
+        logging.info('[apfakerV2] plugin loaded')
 
     def on_ready(self, agent):
         if not self.ready:
@@ -96,16 +95,17 @@ class APFakerV2(plugins.Plugin):
         frames = list()
         for idx, ssid in enumerate(self.ssids[:self.options['max']]):
             try:
-                logging.info('[apfakerv2] creating fake ap with ssid "%s"', ssid)
-                frames.append(APFakerV2.create_beacon(ssid, password_protected=self.options['password_protected']))
+                logging.info('[apfakerV2] creating fake ap with ssid "%s"', ssid)
+                frames.append(apfakerV2.create_beacon(ssid, password_protected=self.options['password_protected']))
                 agent.view().set('apfake', str(idx + 1))
             except Exception as ex:
-                logging.debug('[apfakerv2] %s', ex)
+                logging.debug('[apfakerV2] %s', ex)
 
         main_config = agent.config()
 
         while self.ready:
-            sendp(frames, iface=main_config['main']['iface'], verbose=False)
+            # per https://www.4armed.com/blog/forging-wifi-beacon-frames-using-scapy/
+            sendp(frames, iface=main_config['main']['iface'], verbose=False, inter=0.100, loop=1)  #frame to be sent every 100 milliseconds until the program is exited
             sleep(max(0.1, len(frames) / 100))
 
     def on_ui_setup(self, ui):
@@ -113,10 +113,14 @@ class APFakerV2(plugins.Plugin):
             ui.add_element('apfake', LabeledValue(color=BLACK, label='F', value='-', position=(ui.width() / 2 + 20, 0),
                            label_font=fonts.Bold, text_font=fonts.Medium))
 
+    def on_before_shutdown(self):
+        self.ready = False
+        logging.info('[apfakerV2] plugin is shutting down')
+
     def on_unload(self, ui):
+        self.ready = False
         with ui._lock:
             try:
                 ui.remove_element('apfake')
-                self.ready = False
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
