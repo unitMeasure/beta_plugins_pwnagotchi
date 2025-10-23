@@ -9,7 +9,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = 'avipars'
-    __version__ = "0.0.0.7"
+    __version__ = "0.0.0.8"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
@@ -61,13 +61,15 @@ class probeReq(plugins.Plugin):
         if not self.running:
             return
         probe = event['data']
-        stat = "Probe:%s" % probe['essid']
+
+        stat = "Probe:%s" % self._truncate_string(probe['essid'])
         if 'verbose' in self.options and self.options['verbose']:
             stat += "rssi:%s" % probe["rssi"]
             vend = probe['vendor']
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\nvend:%s" % vend
-            stat += "mac:%s" % (probe["rssi"], probe['mac'])
+               stat += "\nvend:%s" % self._truncate_string(vend)
+
+            stat += "mac:%s" % probe['mac']
         
         self.pr_status = stat
         if 'logging' in self.options and self.options['logging']:
@@ -82,3 +84,21 @@ class probeReq(plugins.Plugin):
                     logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
+
+
+     def _truncate_string(self, text, max_length=20, indicator="..."):
+        """
+        Truncate a string to max_length and add indicator if truncated
+        """
+        if not text:
+            return text
+        
+        text = str(text)
+        if len(text) <= max_length:
+            return text
+        
+        # Reserve space for the indicator
+        if len(indicator) < max_length:
+            return text[:max_length - len(indicator)] + indicator
+        else:
+            return text[:max_length]
