@@ -7,7 +7,6 @@ from pwnagotchi.ui.view import BLACK
 from pwnagotchi.ui import fonts
 from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp
 
-
 class APSpoofer(plugins.Plugin):
     __author__ = 'avipars'
     __version__ = '1.0.0'

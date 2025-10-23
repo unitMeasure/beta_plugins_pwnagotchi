@@ -30,7 +30,6 @@ class probeReq(plugins.Plugin):
             logging.info(f"[{self.__class__.__name__}] plugin loaded")
         self.pr_status = "Waiting."
 
-
     def on_ready(self, agent):
         if 'logging' in self.options and self.options['logging']:
             logging.info(f"[{self.__class__.__name__}] plugin ready")
