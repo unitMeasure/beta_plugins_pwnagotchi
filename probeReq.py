@@ -9,26 +9,32 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = 'avipars'
-    __version__ = "0.0.0.6"
+    __version__ = "0.0.0.7"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
     __defaults__ = {
         "enabled": False,
         "verbose": False,
+        "logging": False,
     }
 
     def __init__(self):
         self.ready = False
         self.title = ""
         self.running = True
-        self.pr_status = "Waiting..."
+        self.pr_status = "Waiting"
 
     def on_loaded(self):
-        logging.info(f"[{self.__class__.__name__}] plugin loaded")
+        if 'logging' in self.options and self.options['logging']:
+            logging.info(f"[{self.__class__.__name__}] plugin loaded")
+        self.pr_status = "Waiting."
+
 
     def on_ready(self, agent):
-        logging.info(f"[{self.__class__.__name__}] plugin ready")
+        if 'logging' in self.options and self.options['logging']:
+            logging.info(f"[{self.__class__.__name__}] plugin ready")
+        self.pr_status = "Waiting.."
 
     def on_ui_setup(self, ui):
         try:
@@ -55,23 +61,24 @@ class probeReq(plugins.Plugin):
         if not self.running:
             return
         probe = event['data']
-        stat = "Probe: %s" % probe['essid']
+        stat = "Probe:%s" % probe['essid']
         if 'verbose' in self.options and self.options['verbose']:
+            stat += "rssi:%s" % probe["rssi"]
             vend = probe['vendor']
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\nvend: %s" % vend
-            stat += "\nrssi: %s mac: %s" % (probe["rssi"], probe['mac'])
+               stat += "\nvend:%s" % vend
+            stat += "mac:%s" % (probe["rssi"], probe['mac'])
         
         self.pr_status = stat
-            
-        logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
+        if 'logging' in self.options and self.options['logging']:
+            logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
     def on_unload(self, ui):
         self.running = False
         with ui._lock:
             try:
                 ui.remove_element("pr_status")
-                logging.info(f"[{self.__class__.__name__}] plugin unloaded")
+                if 'logging' in self.options and self.options['logging']:
+                    logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
-
