@@ -9,12 +9,13 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = 'avipars'
-    __version__ = "0.0.0.5"
+    __version__ = "0.0.0.6"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
     __defaults__ = {
-        "enabled": False
+        "enabled": False,
+        "verbose": False,
     }
 
     def __init__(self):
@@ -57,9 +58,9 @@ class probeReq(plugins.Plugin):
         stat = "Probe: %s" % probe['essid']
         if 'verbose' in self.options and self.options['verbose']:
             vend = probe['vendor']
-            if vend and len(vend) > 1: # has a vendor
-               stat += "\n vendor: %s" % vend
-            stat += "\n rssi: %s  mac: %s" % (probe["rssi"], probe['mac'])
+            if vend and len(vend) >= 1: # has a vendor
+               stat += "\nvend: %s" % vend
+            stat += "\nrssi: %s mac: %s" % (probe["rssi"], probe['mac'])
         
         self.pr_status = stat
             
@@ -73,3 +74,4 @@ class probeReq(plugins.Plugin):
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
+
