@@ -35,7 +35,7 @@ class probeReq(plugins.Plugin):
 
     def on_ui_setup(self, ui):
         try:
-            pos = (1, 76)
+            pos = (1, 75)
             ui.add_element(
                 "pr_status",
                 LabeledValue(
@@ -59,13 +59,13 @@ class probeReq(plugins.Plugin):
             return
         probe = event['data']
         d_name = probe['essid']
-        stat = "Probe:%s" % d_name[0:15]
+        stat = "pr:%s" % d_name[0:15]
         if 'verbose' in self.options and self.options['verbose']:
             stat += " rssi:%s" % probe["rssi"]
             vend = probe['vendor']
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\n ven:%s" % vend[0:15]
-            stat += "\n mac:%s" % probe['mac']
+               stat += "\n" + "ven:%s" % vend[0:15]
+            stat += "\n" + "mac:%s" % probe['mac']
         
         self.pr_status = stat
         if 'logging' in self.options and self.options['logging']:
