@@ -9,7 +9,7 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp
 
 class APSpoofer(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '1.0.1'
+    __version__ = '1.0.2'
     __license__ = 'GPL3'
     __description__ = 'Spoofs detected APs with same MAC to disrupt connections.'
     __dependencies__ = {
@@ -18,7 +18,6 @@ class APSpoofer(plugins.Plugin):
     __defaults__ = {
         'enabled': False,
         'max_spoofed': 10,  # Maximum number of APs to spoof simultaneously
-        'beacon_interval': 0.1,  # Time between beacon broadcasts
     }
 
     def __init__(self):
@@ -152,7 +151,7 @@ class APSpoofer(plugins.Plugin):
 
                 if frames:
                     sendp(frames, iface=self.iface, verbose=False)
-                    sleep(self.options['beacon_interval'])
+                    sleep(0.1)
                 else:
                     sleep(1)
 
@@ -187,3 +186,4 @@ class APSpoofer(plugins.Plugin):
         self.running = False
 
         self.shutdown = True
+
