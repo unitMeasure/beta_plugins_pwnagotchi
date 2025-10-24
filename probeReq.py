@@ -9,7 +9,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = 'avipars'
-    __version__ = "0.0.1.2"
+    __version__ = "0.0.1.3"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
     __name__ = "probeReq"
@@ -26,12 +26,12 @@ class probeReq(plugins.Plugin):
         self.pr_status = "Waiting"
 
     def on_loaded(self):
-        if 'logging' in self.options and self.options['logging']:
-            logging.info(f"[{self.__class__.__name__}] plugin loaded")
+        logging.info(f"[{self.__class__.__name__}] plugin loaded")
+        self.pr_status = "Waiting."
 
     def on_ready(self, agent):
-        if 'logging' in self.options and self.options['logging']:
-            logging.info(f"[{self.__class__.__name__}] plugin ready")
+        logging.info(f"[{self.__class__.__name__}] plugin ready")
+        self.pr_status = "Waiting.."
 
     def on_ui_setup(self, ui):
         try:
@@ -60,7 +60,7 @@ class probeReq(plugins.Plugin):
         probe = event['data']
         stat = "Probe:%s" % probe['essid']
         if 'verbose' in self.options and self.options['verbose']:
-            stat += "rssi:%s" % probe["rssi"]
+            stat += " rssi:%s" % probe["rssi"]
             vend = probe['vendor']
             if vend and len(vend) >= 1: # has a vendor
                stat += "\n vend:%s" % vend
@@ -75,7 +75,7 @@ class probeReq(plugins.Plugin):
         with ui._lock:
             try:
                 ui.remove_element("pr_status")
-                if 'logging' in self.options and self.options['logging']:
-                    logging.info(f"[{self.__class__.__name__}] plugin unloaded")
+                logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
+
