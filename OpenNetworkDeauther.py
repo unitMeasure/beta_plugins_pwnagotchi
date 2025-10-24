@@ -39,7 +39,7 @@ class OpenNetworkDeauther(plugins.Plugin):
 
     def on_ready(self, agent):
         logging.info("[OpenNetworkDeauther] Plugin ready")
-        self.start(self)
+        self.start()
 
     def start(self):
         if not self.running:
@@ -131,4 +131,5 @@ def options():
         'count': 0,  # 0 for infinite deauth
         'verbose': True,
         'target_ssid': None  # Optional: limit to specific SSID
+
     }
