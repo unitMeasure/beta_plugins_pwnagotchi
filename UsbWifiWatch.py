@@ -8,7 +8,7 @@ import pwnagotchi.plugins as plugins
 
 class UsbWifiWatch(plugins.Plugin):
     __author__ = "unitMeasure"
-    __version__ = "0.0.1"
+    __version__ = "0.0.2"
     __license__ = "GPL3"
     __description__ = "Show USB devices and wlan interface modes on screen"
     __name__ = "UsbWifiWatch"
@@ -181,16 +181,16 @@ class UsbWifiWatch(plugins.Plugin):
         # no extra overlay elements to the framework required, return None
         return None
 
-  def on_unload(self):
-      logging.info("[usb_wifi_watch] unloading plugin")
-      self.stop_worker()
-  
-      # Clean up any UI elements from this plugin
-      try:
-          with ui._lock:
-              for element_id in ["usb_wifi_watch_usb", "usb_wifi_watch_wifi", "usb_wifi_watch"]:
-                  if hasattr(ui, "remove_element"):
-                      ui.remove_element(element_id)
-                      logging.debug(f"[usb_wifi_watch] removed UI element {element_id}")
-      except Exception as e:
-          logging.debug("[usb_wifi_watch] error cleaning UI elements: %s", e)
+    def on_unload(self):
+        logging.info("[usb_wifi_watch] unloading plugin")
+        self.stop_worker()
+
+        # Clean up any UI elements from this plugin
+        try:
+            with ui._lock:
+                for element_id in ["usb_wifi_watch_usb", "usb_wifi_watch_wifi", "usb_wifi_watch"]:
+                    if hasattr(ui, "remove_element"):
+                        ui.remove_element(element_id)
+                        logging.debug(f"[usb_wifi_watch] removed UI element {element_id}")
+        except Exception as e:
+            logging.debug("[usb_wifi_watch] error cleaning UI elements: %s", e)
