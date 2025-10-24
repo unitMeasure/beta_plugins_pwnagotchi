@@ -64,7 +64,7 @@ class probeReq(plugins.Plugin):
             stat += " rssi:%s" % probe["rssi"]
             vend = probe['vendor']
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\n vend:%s" % vend[0:15]
+               stat += "\n ven:%s" % vend[0:15]
             stat += "\n mac:%s" % probe['mac']
         
         self.pr_status = stat
@@ -79,5 +79,6 @@ class probeReq(plugins.Plugin):
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
+
 
 
