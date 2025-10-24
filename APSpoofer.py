@@ -9,7 +9,7 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp
 
 class APSpoofer(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '1.0.0'
+    __version__ = '1.0.1'
     __license__ = 'GPL3'
     __description__ = 'Spoofs detected APs with same MAC to disrupt connections.'
     __dependencies__ = {
@@ -101,8 +101,11 @@ class APSpoofer(plugins.Plugin):
         if not mac or mac in self.spoofed_aps:
             return
 
+        max_spoof = 10
+        if 'max_spoofed' in self.options:
+            max_spoof = self.options['max_spoofed']
         # Check if we've reached the max spoofed APs limit
-        if len(self.spoofed_aps) >= self.options['max_spoofed']:
+        if len(self.spoofed_aps) >= max_spoof:
             logging.debug('[APSpoofer] Max spoofed APs reached (%d)', self.options['max_spoofed'])
             return
 
@@ -182,4 +185,5 @@ class APSpoofer(plugins.Plugin):
             except:
                 pass
         self.running = False
+
         self.shutdown = True
