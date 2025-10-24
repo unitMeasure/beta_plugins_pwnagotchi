@@ -6,7 +6,7 @@ import time
 
 class OpenNetworkDeauther(plugins.Plugin):
     __author__ = 'betab0t'
-    __version__ = '0.0.1'
+    __version__ = '0.0.2'
     __license__ = 'GPL3'
     __description__ = 'A Pwnagotchi plugin to scan for open Wi-Fi networks and deauth clients'
 
@@ -133,3 +133,4 @@ def options():
         'target_ssid': None  # Optional: limit to specific SSID
 
     }
+
