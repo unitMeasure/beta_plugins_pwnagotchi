@@ -12,7 +12,7 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 class APFaking(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com and avipars'
-    __version__ = '2.0.4.1'
+    __version__ = '2.0.4.2'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps.'
     __dependencies__ = {
@@ -80,9 +80,11 @@ class APFaking(plugins.Plugin):
         self.ready = True
         logging.info('[APFaking] plugin loaded')
         self.running = True
+        self.shutdown = False
 
     def on_ready(self, agent):
-        if not self.ready or not self.running or self.shutdown:
+        if not self.running or self.shutdown:
+            logging.info('[APFaking] exiting ready _ s' + self.shutdown + '_nr' + not self.ready)
             return
 
         shuffle(self.ssids)
@@ -104,7 +106,7 @@ class APFaking(plugins.Plugin):
 
         main_config = agent.config()
 
-        while not self.shutdown and self.running:
+        while not self.shutdown:
             sendp(frames, iface=main_config['main']['iface'], verbose=False)
             sleep(max(0.1, len(frames) / 100))
 
@@ -118,7 +120,8 @@ class APFaking(plugins.Plugin):
                            label_font=fonts.Bold, text_font=fonts.Medium))
 
     def on_unload(self, ui):
+        self.running = False
+        self.shutdown = True
         with ui._lock:
             ui.remove_element('apfake')
-            self.running = False
-            self.shutdown = True
+            
