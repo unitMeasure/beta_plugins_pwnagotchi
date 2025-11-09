@@ -27,7 +27,6 @@ class APFaking(plugins.Plugin):
 
     def __init__(self):
         self.options = dict()
-        self.ready = False
         self.shutdown = False
         self.running = False
 
@@ -122,6 +121,5 @@ class APFaking(plugins.Plugin):
         self.running = False
         self.shutdown = True
         with ui._lock:
-            ui.remove_element('apfake')
+            ui.remove_element('apfaking')
             
-
