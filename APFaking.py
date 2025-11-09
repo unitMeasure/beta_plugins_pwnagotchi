@@ -12,14 +12,13 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 class APFaking(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com and avipars'
-    __version__ = '2.0.4.2'
+    __version__ = '2.0.4.3'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps.'
     __dependencies__ = {
         'pip': ['scapy'],
     }
     __defaults__ = {
-        'enabled': False,
         'ssids': ['5G TEST CELL TOWER', 'FBI Van', 'NSA Surveillance Van', 'CIA Listening Post', 'FBI Surveillance Van'],
         'max': 10,
         'repeat': True,
@@ -100,7 +99,7 @@ class APFaking(plugins.Plugin):
             try:
                 logging.info('[APFaking] creating fake ap with ssid "%s"', ssid)
                 frames.append(APFaking.create_beacon(ssid, password_protected=self.options['password_protected']))
-                agent.view().set('apfake', str(idx + 1))
+                agent.view().set('apfaking', str(idx + 1))
             except Exception as ex:
                 logging.debug('[APFaking] %s', ex)
 
@@ -116,7 +115,7 @@ class APFaking(plugins.Plugin):
 
     def on_ui_setup(self, ui):
         with ui._lock:
-            ui.add_element('apfake', LabeledValue(color=BLACK, label='F', value='-', position=(ui.width() / 2 + 20, 0),
+            ui.add_element('apfaking', LabeledValue(color=BLACK, label='F', value='-', position=(ui.width() / 2 + 20, 0),
                            label_font=fonts.Bold, text_font=fonts.Medium))
 
     def on_unload(self, ui):
@@ -125,3 +124,4 @@ class APFaking(plugins.Plugin):
         with ui._lock:
             ui.remove_element('apfake')
             
+
