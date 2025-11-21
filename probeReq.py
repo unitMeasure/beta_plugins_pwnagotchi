@@ -8,10 +8,10 @@ from pwnagotchi.bettercap import Client
 class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
-    __editor__ = 'avipars'
-    __version__ = "0.0.1.5"
+    __editor__ = "avipars"
+    __version__ = "0.0.1.6"
     __license__ = "GPL3"
-    __description__ = "Listens for Wi-Fi probe requests and displays them on screen"
+    __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
     __defaults__ = {
         "enabled": False,
@@ -24,6 +24,8 @@ class probeReq(plugins.Plugin):
         self.title = ""
         self.running = True
         self.pr_status = "Waiting"
+        self.pos_x = 1
+        self.pos_y = 75
 
     def on_loaded(self):
         logging.info(f"[{self.__class__.__name__}] plugin loaded")
@@ -35,14 +37,19 @@ class probeReq(plugins.Plugin):
 
     def on_ui_setup(self, ui):
         try:
-            pos = (1, 75)
+            if "pos_x" in self.options:
+                self.pos_x = int(self.options.get("pos_x", 1)) or 1
+            if "pos_y" in self.options:
+                self.pos_y = int(self.options.get("pos_y", 75)) or 75
+
+            
             ui.add_element(
                 "pr_status",
                 LabeledValue(
                     color=BLACK,
                     label="",
                     value=f"[{self.__class__.__name__}]: Active",
-                    position=pos,
+                    position=(self.pos_x, self.pos_y),
                     label_font=fonts.Small,
                     text_font=fonts.Small,
                 ),
@@ -57,18 +64,23 @@ class probeReq(plugins.Plugin):
         """WIFI CLIENT PROBE REQUEST"""
         if not self.running:
             return
-        probe = event['data']
-        d_name = probe['essid']
-        stat = "pr:%s" % d_name[0:20]
-        if 'verbose' in self.options and self.options['verbose']:
+
+        probe = event["data"]
+        d_name = probe["essid"]
+
+        stat = "pr:%s" % d_name[0:20] # limit essid to 20 chars
+
+        if "verbose" in self.options and self.options["verbose"]:
             stat += " rssi:%s" % probe["rssi"]
-            vend = probe['vendor']
+            vend = probe["vendor"]
+
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\n" + "ven:%s" % vend[0:15]
-            stat += "\n" + "mac:%s" % probe['mac']
+               stat += "\n" + "ven:%s" % vend[0:15] # limit vendor to 15 chars
+
+            stat += "\n" + "mac:%s" % probe["mac"]
         
         self.pr_status = stat
-        if 'logging' in self.options and self.options['logging']:
+        if "logging" in self.options and self.options["logging"]:
             logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
     def on_unload(self, ui):
