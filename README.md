@@ -7,6 +7,7 @@ If you would like to try production-ready plugins go here: https://github.com/un
 If you want to add this repo to your ```config.toml```. To use these plugins, append this ```https://github.com/unitMeasure/beta_plugins_pwnagotchi/archive/main.zip``` to the ```main.custom_plugin_repos``` array.
 
 
+
 ## net-pos
 
 main.plugins.net-pos.enabled = true
