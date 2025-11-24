@@ -9,7 +9,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.1.6"
+    __version__ = "0.0.1.7"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
@@ -41,7 +41,7 @@ class probeReq(plugins.Plugin):
                 self.pos_x = int(self.options.get("pos_x", 1)) or 1
             if "pos_y" in self.options:
                 self.pos_y = int(self.options.get("pos_y", 75)) or 75
-
+            logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
             
             ui.add_element(
                 "pr_status",
@@ -91,6 +91,7 @@ class probeReq(plugins.Plugin):
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
+
 
 
 
