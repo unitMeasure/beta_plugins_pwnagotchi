@@ -11,7 +11,8 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
 
 class APFaking(plugins.Plugin):
-    __author__ = '33197631+dadav@users.noreply.github.com and avipars'
+    __author__ = '33197631+dadav@users.noreply.github.com'
+    __editor__ = 'avipars'
     __version__ = '2.0.4.3'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps.'
@@ -29,6 +30,7 @@ class APFaking(plugins.Plugin):
         self.options = dict()
         self.shutdown = False
         self.running = False
+        self.ready = True
 
     @staticmethod
     def create_beacon(name, password_protected=False):
@@ -58,6 +60,7 @@ class APFaking(plugins.Plugin):
 
     def on_loaded(self):
         if isinstance(self.options['ssids'], str):
+            logging.error('[APFaking] loading as str %s', self.options['ssids'])
             path = self.options['ssids']
 
             if not os.path.exists(path):
@@ -71,6 +74,8 @@ class APFaking(plugins.Plugin):
                     return
         elif isinstance(self.options['ssids'], list):
             self.ssids = self.options['ssids']
+            logging.error('[APFaking] loading as list %s', self.options['ssids'])
+
         else:
             logging.error('[APFaking] wtf is %s', self.options['ssids'])
             return
@@ -81,8 +86,9 @@ class APFaking(plugins.Plugin):
         self.shutdown = False
 
     def on_ready(self, agent):
-        if not self.running or self.shutdown:
-            logging.info('[APFaking] exiting ready _ s' + self.shutdown + '_nr' + not self.ready)
+        
+        if self.shutdown:
+            logging.info('[APFaking] exiting ready, shutdown?' + self.shutdown + 'ready?' +  self.ready)
             return
 
         shuffle(self.ssids)
@@ -122,4 +128,5 @@ class APFaking(plugins.Plugin):
         self.shutdown = True
         with ui._lock:
             ui.remove_element('apfaking')
-            
+            logging.info('[apfakerV2] plugin is unloading')
+

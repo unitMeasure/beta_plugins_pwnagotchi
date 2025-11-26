@@ -54,19 +54,15 @@ class Better_APFaker(plugins.Plugin):
         if not password_protected:
             return RadioTap() / dot11 / beacon / essid
 
-        rsn = Dot11Elt(
-            ID="RSNinfo",
-            info=(
-                "\x01\x00"
-                "\x00\x0f\xac\x02"
-                "\x02\x00"
-                "\x00\x0f\xac\x04"
-                "\x00\x0f\xac\x02"
-                "\x01\x00"
-                "\x00\x0f\xac\x02"
-                "\x00\x00"
-            ),
-        )
+        rsn = Dot11Elt(ID='RSNinfo', info=(
+                       '\x01\x00'
+                       '\x00\x0f\xac\x02'
+                       '\x02\x00'
+                       '\x00\x0f\xac\x04'
+                       '\x00\x0f\xac\x02'
+                       '\x01\x00'
+                       '\x00\x0f\xac\x02'
+                       '\x00\x00'))
 
         return RadioTap() / dot11 / beacon / essid / rsn
 
