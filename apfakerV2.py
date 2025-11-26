@@ -14,7 +14,7 @@ class apfakerV2(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"
     __editor__ = 'avipars'
-    __version__ = '2.0.5.4'
+    __version__ = '2.0.5.5'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps, now with minor improvements'
     __dependencies__ = {
@@ -82,6 +82,7 @@ class apfakerV2(plugins.Plugin):
 
     def on_ready(self, agent):
         if not self.ready:
+            logging.info('[apfakerV2] not ready')
             return
 
         shuffle(self.ssids)
@@ -105,7 +106,7 @@ class apfakerV2(plugins.Plugin):
 
         while self.ready:
             # per https://www.4armed.com/blog/forging-wifi-beacon-frames-using-scapy/
-            sendp(frames, iface=main_config['main']['iface'], verbose=False, inter=0.100, loop=1)  #frame to be sent every 100 milliseconds until the program is exited
+            sendp(frames, iface=main_config['main']['iface'], verbose=False)  #frame to be sent every 100 milliseconds until the program is exited  inter=0.100, loop=1
             sleep(max(0.1, len(frames) / 100))
 
     def on_ui_setup(self, ui):
