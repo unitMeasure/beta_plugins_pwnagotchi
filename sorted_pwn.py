@@ -179,7 +179,7 @@ TEMPLATE = """
 
 class sorted_pwn(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.2.2'
+    __version__ = '0.0.2.3'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -225,13 +225,11 @@ class sorted_pwn(plugins.Plugin):
                                     "ssid": ssid,
                                     "password": password,
                                     "other_fields": other_fields,   # list
-                                    "raw_line": line
                                 }
                             else:
                                 # keep additional occurrences if you want
                                 unique_entries[key].setdefault("duplicates", []).append({
-                                    "other_fields": other_fields,
-                                    "raw_line": line
+                                    "other_fields": other_fields
                                 })
 
                 # Convert to sorted list
@@ -245,3 +243,4 @@ class sorted_pwn(plugins.Plugin):
                 logging.debug(e, exc_info=True)
 
                 abort(500)
+
