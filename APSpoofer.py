@@ -178,13 +178,15 @@ class APSpoofer(plugins.Plugin):
             ))
 
     def on_unload(self, ui):
+        logging.info('[APSpoofer] plugin is unloading')
+
         with ui._lock:
             try:
                 ui.remove_element('apspoof')
             except:
                 pass
-        self.running = False
 
+        self.running = False
         self.shutdown = True
 
 
