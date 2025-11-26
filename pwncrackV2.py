@@ -9,7 +9,7 @@ import pwnagotchi
 
 class UploadConvertPlugin(Plugin):
     __author__ = 'Terminatoror'
-    __version__ = '1.0.1.3'
+    __version__ = '1.0.1.4'
     __license__ = 'GPL3'
     __description__ = 'Converts .pcap files to .hc22000 and uploads them to pwncrack.org when internet is available.'
 
@@ -33,6 +33,7 @@ class UploadConvertPlugin(Plugin):
         self.timewait = self.options.get('timewait', 600)
 
     def on_internet_available(self, agent):
+        display = agent.view()
         current_time = time.time()
         remaining_wait_time = self.timewait - (current_time - self.last_run_time)
         if remaining_wait_time > 0:
@@ -45,9 +46,18 @@ class UploadConvertPlugin(Plugin):
 
         logging.info(f"[pwncrack] Running upload process. waiting: {self.timewait} seconds.")
         try:
+
+            display.on_uploading("pwncrack uploading handshakes")
             self._convert_and_upload()
+            
+            display.set("pwncrack downloading potfile")
+            display.update()
             self._download_potfile()
+
             self.last_run_time = current_time
+
+            display.on_normal()
+
         except Exception as e:
             logging.error(f"[pwncrack] Error occurred during upload process: {e}", exc_info=True)
 
@@ -69,9 +79,8 @@ class UploadConvertPlugin(Plugin):
             # Ensure the combined file is created
             if not os.path.exists(self.combined_file):
                 open(self.combined_file, 'w').close()
-            with self.lock:
-                display = agent.view()
-                display.on_uploading("pwncrack uploading handshakes")
+
+          
             # Upload the combined .hc22000 file
             with open(self.combined_file, 'rb') as file:
                 files = {'handshake': file}
