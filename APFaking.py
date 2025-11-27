@@ -86,7 +86,6 @@ class APFaking(plugins.Plugin):
         self.shutdown = False
 
     def on_ready(self, agent):
-        
         if self.shutdown:
             logging.info('[APFaking] exiting ready, shutdown?' + self.shutdown + 'ready?' +  self.ready)
             return
@@ -117,6 +116,7 @@ class APFaking(plugins.Plugin):
     def on_before_shutdown(self):
         self.shutdown = True
         self.running = False
+        logging.info('[apfakerV2] plugin before shutdown')
 
     def on_ui_setup(self, ui):
         with ui._lock:

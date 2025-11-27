@@ -9,7 +9,6 @@ from pwnagotchi.ui import fonts
 from time import sleep
 from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 
-
 class apfakerV2(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"

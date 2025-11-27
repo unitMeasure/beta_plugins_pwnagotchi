@@ -5,17 +5,21 @@ from pwnagotchi.plugins import Plugin
 
 
 class WigleLocatorV2(Plugin):
-    __author__ = 'WPA2 and avipars'
-    __version__ = '1.0.0'
+    __author__ = 'WPA2'
+    __editor__ = 'avipars'
+    __version__ = '1.0.0.1'
     __license__ = 'GPL3'
     __description__ = 'Fetches AP location data from WiGLE and saves it with handshake files'
 
     def __init__(self):
         self.api_key = None  # API key will be set in config.toml
-
+        
     def on_loaded(self):
+        if self.is_disabled:
+            logging.info("[WigleLocatorV2] plugin loaded but disabled due to 429 error.")
+            return
         logging.info(f"[WigleLocatorV2] plugin fully loaded with configuration: {self.options}")
-      
+
     def on_webhook(self, path, request):
         if not self.ready:
             return "Plugin not ready"
@@ -35,6 +39,10 @@ class WigleLocatorV2(Plugin):
     def on_handshake(self, agent, filename, access_point, client_station):
         logging.info(f"[WigleLocatorV2] Handshake event captured. Access Point: {access_point['hostname']}, Client Station: {client_station['mac']}")
         
+        if self.is_disabled:
+            logging.info("[WigleLocatorV2] Plugin is disabled due to previous rate limit error. Skipping API request.")
+            return
+
         config = agent.config()
         display = agent.view()
 
@@ -56,6 +64,7 @@ class WigleLocatorV2(Plugin):
             logging.warning(f'[WigleLocatorV2] No location found for BSSID: {bssid}')
 
     def _get_location_from_wigle(self, bssid):
+   
         headers = {
             'Authorization': 'Basic ' + self.api_key
         }
@@ -83,6 +92,9 @@ class WigleLocatorV2(Plugin):
                 }
             else:
                 logging.warning(f'[WigleLocatorV2] No location data found for BSSID: {bssid}')
+        elif response.status_code == 429:
+            logging.error(f'[WigleLocatorV2] WiGLE API rate limit exceeded. Try again tomorrow. Disabling plugin to prevent further requests.')
+            self.is_disabled = True  # Disable the plugin on rate limit exceed to prevent further requests
         else:
             logging.error(f'[WigleLocatorV2] Error fetching WiGLE data: {response.status_code}')
         return None

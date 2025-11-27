@@ -9,7 +9,7 @@ import pwnagotchi
 
 class UploadConvertPlugin(Plugin):
     __author__ = 'Terminatoror'
-    __version__ = '1.0.1.4'
+    __version__ = '1.0.1.5'
     __license__ = 'GPL3'
     __description__ = 'Converts .pcap files to .hc22000 and uploads them to pwncrack.org when internet is available.'
 
@@ -44,20 +44,13 @@ class UploadConvertPlugin(Plugin):
             logging.warn("PWNCrack enabled, but no api key specified. Add a key to config.toml")
             return
 
-        logging.info(f"[pwncrack] Running upload process. waiting: {self.timewait} seconds.")
+        display.set('status', f"[pwncrack] Running upload process. waiting: {self.timewait} seconds.")
+        display.update(force=True)
+
         try:
-
-            display.on_uploading("pwncrack uploading handshakes")
             self._convert_and_upload()
-            
-            display.set("pwncrack downloading potfile")
-            display.update()
             self._download_potfile()
-
             self.last_run_time = current_time
-
-            display.on_normal()
-
         except Exception as e:
             logging.error(f"[pwncrack] Error occurred during upload process: {e}", exc_info=True)
 

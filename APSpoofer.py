@@ -9,7 +9,7 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp
 
 class APSpoofer(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '1.0.3.2'
+    __version__ = '1.0.3.3'
     __license__ = 'GPL3'
     __description__ = 'Spoofs detected APs with same MAC to disrupt connections.'
     __dependencies__ = {
@@ -66,6 +66,7 @@ class APSpoofer(plugins.Plugin):
 
     def on_ready(self, agent):
         if not self.ready or not self.running or self.shutdown:
+            logging.info('[APSpoofer] on Ready but not running')
             return
 
         self.iface = agent.config()['main']['iface']
@@ -76,18 +77,19 @@ class APSpoofer(plugins.Plugin):
         self.broadcast_thread.daemon = True
         self.broadcast_thread.start()
 
-    def on_wifi_update(self, agent, access_points):
-        """
-        Called when the list of APs is updated
-        You can also use this as an alternative to on_bcap_wifi_ap_new
-        """
-        pass
+    # def on_wifi_update(self, agent, access_points):
+    #     """
+    #     Called when the list of APs is updated
+    #     You can also use this as an alternative to on_bcap_wifi_ap_new
+    #     """
+    #     pass
 
     def on_bcap_wifi_ap_new(self, agent, event):
         """
         Called when a new AP is detected
         """
         if not self.ready or not self.running or self.shutdown:
+            logging.info('[APSpoofer] on_bcap_wifi_ap_new but not running')
             return
 
         ap = event['data']
@@ -131,7 +133,7 @@ class APSpoofer(plugins.Plugin):
         """
         Continuously broadcast beacon frames for all spoofed APs
         """
-        while not self.shutdown and self.running:
+        while not self.shutdown and self.running and self.ready:
             if not self.spoofed_aps or not self.iface:
                 sleep(1)
                 continue
@@ -163,6 +165,7 @@ class APSpoofer(plugins.Plugin):
         logging.info('[APSpoofer] Shutting down...')
         self.shutdown = True
         self.running = False
+        self.ready = False
         if self.broadcast_thread:
             self.broadcast_thread.join(timeout=2)
 
@@ -179,15 +182,16 @@ class APSpoofer(plugins.Plugin):
 
     def on_unload(self, ui):
         logging.info('[APSpoofer] plugin is unloading')
-
+        self.running = False
+        self.shutdown = True
+        self.ready = False
         with ui._lock:
             try:
                 ui.remove_element('apspoof')
-            except:
-                pass
+            except Exception as e:
+                logging.error(f'[APSpoofer] UI element removal error {e}',  exc_info=True)
 
-        self.running = False
-        self.shutdown = True
+     
 
 
 
