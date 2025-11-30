@@ -7,12 +7,13 @@ from pwnagotchi.plugins import Plugin
 class WigleLocatorV2(Plugin):
     __author__ = 'WPA2'
     __editor__ = 'avipars'
-    __version__ = '1.0.0.1'
+    __version__ = '1.0.0.2'
     __license__ = 'GPL3'
     __description__ = 'Fetches AP location data from WiGLE and saves it with handshake files'
 
     def __init__(self):
         self.api_key = None  # API key will be set in config.toml
+        self.is_disabled = False
         
     def on_loaded(self):
         if self.is_disabled:
