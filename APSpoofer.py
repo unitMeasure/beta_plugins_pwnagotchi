@@ -77,13 +77,6 @@ class APSpoofer(plugins.Plugin):
         self.broadcast_thread.daemon = True
         self.broadcast_thread.start()
 
-    # def on_wifi_update(self, agent, access_points):
-    #     """
-    #     Called when the list of APs is updated
-    #     You can also use this as an alternative to on_bcap_wifi_ap_new
-    #     """
-    #     pass
-
     def on_bcap_wifi_ap_new(self, agent, event):
         """
         Called when a new AP is detected
@@ -190,9 +183,3 @@ class APSpoofer(plugins.Plugin):
                 ui.remove_element('apspoof')
             except Exception as e:
                 logging.error(f'[APSpoofer] UI element removal error {e}',  exc_info=True)
-
-     
-
-
-
-

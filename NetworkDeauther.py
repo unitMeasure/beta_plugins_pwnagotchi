@@ -31,9 +31,9 @@ class NetworkDeauther(plugins.Plugin):
 
             try:
                 if "pos_x" in self.options:
-                    self.pos_x = int(self.options.get("pos_x", 1)) or 1
+                    self.pos_x = int(self.options.get("pos_x", 1)) 
                 if "pos_y" in self.options:
-                    self.pos_y = int(self.options.get("pos_y", 75)) or 75
+                    self.pos_y = int(self.options.get("pos_y", 75))
 
                 
                 ui.add_element(

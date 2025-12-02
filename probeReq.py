@@ -9,7 +9,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.1.7"
+    __version__ = "0.0.1.8"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
@@ -38,9 +38,10 @@ class probeReq(plugins.Plugin):
     def on_ui_setup(self, ui):
         try:
             if "pos_x" in self.options:
-                self.pos_x = int(self.options.get("pos_x", 1)) or 1
+                self.pos_x = int(self.options.get("pos_x", 1))
             if "pos_y" in self.options:
-                self.pos_y = int(self.options.get("pos_y", 75)) or 75
+                self.pos_y = int(self.options.get("pos_y", 75))
+
             logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
             
             ui.add_element(
@@ -77,7 +78,7 @@ class probeReq(plugins.Plugin):
             if vend and len(vend) >= 1: # has a vendor
                stat += "\n" + "ven:%s" % vend[0:15] # limit vendor to 15 chars
 
-            stat += "\n" + "mac:%s" % probe["mac"]
+            stat += "\n" + "mac:%s" % probe["mac"] # full mac address
         
         self.pr_status = stat
         if "logging" in self.options and self.options["logging"]:
@@ -91,8 +92,4 @@ class probeReq(plugins.Plugin):
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
-
-
-
-
 
