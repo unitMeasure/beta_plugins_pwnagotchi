@@ -2,12 +2,8 @@ import logging
 import json
 import os
 import glob
-
 import pwnagotchi.plugins as plugins
-
-from flask import abort
-from flask import send_from_directory
-from flask import render_template_string
+from flask import abort, send_from_directory, render_template_string, request, make_response
 
 TEMPLATE = """
 {% extends "base.html" %}
@@ -144,11 +140,22 @@ TEMPLATE = """
             }
         }
     }
-
 {% endblock %}
 
 {% block content %}
     <input type="text" id="searchText" placeholder="Search for ..." title="Type in a filter">
+    <div style="margin-bottom:10px;">
+    Sort:
+    {% if order == "asc" %}
+        <strong>Ascending</strong> |
+        <a href="?order=desc">Descending</a>
+    {% else %}
+        <a href="?order=asc">Ascending</a> |
+        <strong>Descending</strong>
+    {% endif %}
+    |
+    <a href="?order={{ order }}&export=1">Export HTML</a>
+    </div>
     <table id="tableOptions">
         <tr>
             <th>SSID</th>
@@ -179,7 +186,7 @@ TEMPLATE = """
 
 class sorted_pwn(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.2.3'
+    __version__ = '0.0.2.4'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -199,9 +206,13 @@ class sorted_pwn(plugins.Plugin):
 
         if path == "/" or not path:
             try:
+                order = request.args.get("order", "asc").lower()
+                reverse_sort = order == "desc"
+                export = request.args.get("export", "0") == "1"
+
                 base_dir = self.config['bettercap']['handshakes']
                 potfile_paths = glob.glob(os.path.join(base_dir, "*.potfile"))
-            
+
                 unique_entries = {}
                 for pf_path in potfile_paths:
                     logging.info("[sorted_pwn] trying to open %s" % pf_path)
@@ -224,20 +235,33 @@ class sorted_pwn(plugins.Plugin):
                                 unique_entries[key] = {
                                     "ssid": ssid,
                                     "password": password,
-                                    "other_fields": other_fields,   # list
+                                    "other_fields": other_fields,   # list of other fields usually bssid etc.
                                 }
-                            else:
-                                # keep additional occurrences if you want
-                                unique_entries[key].setdefault("duplicates", []).append({
-                                    "other_fields": other_fields
+                            else: # keep additional occurrences if you want
+                                unique_entries[key].setdefault("duplicates", []).append({ 
+                                    "other_fields": other_fields   
                                 })
 
-                # Convert to sorted list
-                sorted_passwords = sorted(unique_entries.values(), key=lambda x: (x["ssid"].lower(), x["password"]))
+                sorted_passwords = sorted(unique_entries.values(), key=lambda x: (x["ssid"].lower(), x["password"]), reverse=reverse_sort)  # Convert to sorted list
 
-                return render_template_string(TEMPLATE,
-                                            title="Unique Passwords List",
-                                            passwords=sorted_passwords)
+                html = render_template_string(
+                    TEMPLATE,
+                    title="Unique Passwords List",
+                    passwords=sorted_passwords,
+                    order=order
+                )
+
+                if export:
+                    response = make_response(html)
+                    response.headers["Content-Type"] = "text/html"
+                    response.headers["Content-Disposition"] = (
+                        "attachment; filename=sorted_pwn_passwords_%s.html" % order
+                    )
+                    return response
+
+                return html
+
+              
             except Exception as e:
                 logging.error("[sorted_pwn] error while loading potfiles: %s" % e)
                 logging.debug(e, exc_info=True)
