@@ -32,6 +32,7 @@ class APFaking(plugins.Plugin):
         self.shutdown = False
         self.ready = True
         self.ap_status = "I"
+        self.turn_off = False
 
     @staticmethod
     def create_beacon(name, password_protected=False):
@@ -114,10 +115,15 @@ class APFaking(plugins.Plugin):
         main_config = agent.config()
 
         while not self.shutdown:
+            if self.turn_off:
+                self.ap_status =  "U"
+                logging.info('[apfakerV2] plugin turning off')
+                break
             sendp(frames, iface=main_config['main']['iface'], verbose=False)
             sleep(max(0.1, len(frames) / 100))
 
     def on_before_shutdown(self):
+        self.turn_off = True
         self.ap_status =  "B"
         self.shutdown = True
         logging.info('[apfakerV2] plugin before shutdown')
@@ -131,6 +137,7 @@ class APFaking(plugins.Plugin):
                 logging.debug('[apfakerV2] %s', ex) 
 
     def on_unload(self, ui):
+        self.turn_off = True
         self.shutdown = True
         self.ap_status =  "U"
         with ui._lock:

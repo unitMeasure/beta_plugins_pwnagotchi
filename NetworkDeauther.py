@@ -6,7 +6,7 @@ import time
 
 class NetworkDeauther(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.2.1'
+    __version__ = '0.0.2.2'
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __license__ = 'GPL3'
     __description__ = 'A Pwnagotchi plugin to scan for Wi-Fi networks and deauth clients. Proceed with caution and ensure compliance with local laws.'
@@ -15,25 +15,25 @@ class NetworkDeauther(plugins.Plugin):
         self.running = False
         self.interface = None
         self.networks = {}  # {BSSID: {ssid, channel, clients}}
-        self.deauth_interval = 0.1
+        self.deauth_interval = 0.5
         self.deauth_count = None  # None for infinite
         self.deauth_loop = 1  # Infinite loop if count is None
         self.verbose = True
         self.only_open = True
-        self.pos_x = 1
-        self.pos_y = 75
+        self.pos_x = 20
+        self.pos_y = 100
         self.show_ui = True
         self.target_ssid = None
 
     def on_ui_setup(self, ui):
-        if "show_ui" in self.options and  self.options["show_ui"]:
+        if "show_ui" in self.options and self.options["show_ui"]:
             self.show_ui = True
 
             try:
                 if "pos_x" in self.options:
-                    self.pos_x = int(self.options.get("pos_x", 1)) 
+                    self.pos_x = int(self.options.get("pos_x", 20)) 
                 if "pos_y" in self.options:
-                    self.pos_y = int(self.options.get("pos_y", 75))
+                    self.pos_y = int(self.options.get("pos_y", 100))
 
                 
                 ui.add_element(
