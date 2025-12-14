@@ -13,7 +13,7 @@ from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 class APFaking(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __editor__ = 'avipars'
-    __version__ = '2.0.4.3'
+    __version__ = '2.0.4.4'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps.'
     __dependencies__ = {
@@ -22,6 +22,7 @@ class APFaking(plugins.Plugin):
     __defaults__ = {
         'ssids': ['5G TEST CELL TOWER', 'FBI Van', 'NSA Surveillance Van', 'CIA Listening Post', 'FBI Surveillance Van'],
         'max': 10,
+        'enabled': False,
         'repeat': True,
         'password_protected': False,
     }
@@ -29,8 +30,8 @@ class APFaking(plugins.Plugin):
     def __init__(self):
         self.options = dict()
         self.shutdown = False
-        self.running = False
         self.ready = True
+        self.ap_status = "I"
 
     @staticmethod
     def create_beacon(name, password_protected=False):
@@ -82,12 +83,14 @@ class APFaking(plugins.Plugin):
 
         self.ready = True
         logging.info('[APFaking] plugin loaded')
-        self.running = True
         self.shutdown = False
 
+    def on_ui_update(self, ui):
+        ui.set("apfaking", "%s" % (self.ap_status))
+
     def on_ready(self, agent):
-        if self.shutdown:
-            logging.info('[APFaking] exiting ready, shutdown?' + self.shutdown + 'ready?' +  self.ready)
+        if not self.ready:
+            logging.info('[APFaking] exiting ready, shutdown')
             return
 
         shuffle(self.ssids)
@@ -103,7 +106,8 @@ class APFaking(plugins.Plugin):
             try:
                 logging.info('[APFaking] creating fake ap with ssid "%s"', ssid)
                 frames.append(APFaking.create_beacon(ssid, password_protected=self.options['password_protected']))
-                agent.view().set('apfaking', str(idx + 1))
+                # agent.view().set('apfaking', str(idx + 1))
+                self.ap_status =  str(idx + 1)
             except Exception as ex:
                 logging.debug('[APFaking] %s', ex)
 
@@ -114,19 +118,25 @@ class APFaking(plugins.Plugin):
             sleep(max(0.1, len(frames) / 100))
 
     def on_before_shutdown(self):
+        self.ap_status =  "B"
         self.shutdown = True
-        self.running = False
         logging.info('[apfakerV2] plugin before shutdown')
 
     def on_ui_setup(self, ui):
         with ui._lock:
-            ui.add_element('apfaking', LabeledValue(color=BLACK, label='F', value='-', position=(ui.width() / 2 + 20, 0),
-                           label_font=fonts.Bold, text_font=fonts.Medium))
+            try:
+                ui.add_element('apfaking', LabeledValue(color=BLACK, label='F', value='S', position=(ui.width() / 2 + 20, 0),
+                            label_font=fonts.Bold, text_font=fonts.Medium))
+            except Exception as ex:
+                logging.debug('[apfakerV2] %s', ex) 
 
     def on_unload(self, ui):
-        self.running = False
         self.shutdown = True
+        self.ap_status =  "U"
         with ui._lock:
-            ui.remove_element('apfaking')
-            logging.info('[apfakerV2] plugin is unloading')
+            try:
+                ui.remove_element('apfaking')
+                logging.info('[apfakerV2] plugin is unloading')
+            except Exception as ex:
+                logging.debug('[apfakerV2] %s', ex)
 
