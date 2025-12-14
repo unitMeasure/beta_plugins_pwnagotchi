@@ -53,7 +53,7 @@ class NetworkDeauther(plugins.Plugin):
     def on_loaded(self):
         logging.info("[NetworkDeauther] Plugin loaded")
         self.interface = self.options.get('interface', 'wlan0mon')
-        self.deauth_interval = float(self.options.get('interval', 0.1))
+        self.deauth_interval = float(self.options.get('interval', 0.5))
         self.deauth_count = int(self.options.get('count', 0)) or None
         self.verbose = self.options.get('verbose', True)
         self.target_ssid = self.options.get('target_ssid', None)  # Optional: limit to specific SSID
