@@ -8,6 +8,7 @@ from pwnagotchi.ui.view import BLACK
 from pwnagotchi.ui import fonts
 from time import sleep
 from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
+import threading
 
 
 class APFaking(plugins.Plugin):
@@ -93,7 +94,16 @@ class APFaking(plugins.Plugin):
         if not self.ready:
             logging.info('[APFaking] exiting ready, shutdown')
             return
+            
+        self.shutdown = False
+        self.turn_off = False
+        self.worker = threading.Thread(
+            target=self._run,
+            args=(agent,),
+            daemon=True)
+        self.worker.start()
 
+        logging.info('[APFaking] worker thread started')
         shuffle(self.ssids)
 
         cnt = 0
@@ -117,7 +127,7 @@ class APFaking(plugins.Plugin):
         while not self.shutdown:
             if self.turn_off:
                 self.ap_status =  "U"
-                logging.info('[apfakerV2] plugin turning off')
+                logging.info('[APFaking] plugin turning off')
                 break
             sendp(frames, iface=main_config['main']['iface'], verbose=False)
             sleep(max(0.1, len(frames) / 100))
@@ -126,15 +136,15 @@ class APFaking(plugins.Plugin):
         self.turn_off = True
         self.ap_status =  "B"
         self.shutdown = True
-        logging.info('[apfakerV2] plugin before shutdown')
+        logging.info('[APFaking] plugin before shutdown')
 
     def on_ui_setup(self, ui):
         with ui._lock:
             try:
-                ui.add_element('apfaking', LabeledValue(color=BLACK, label='F', value='S', position=(ui.width() / 2 + 20, 0),
+                ui.add_element('apfaking', LabeledValue(color=BLACK, label='F', value='S', position=(int(ui.width() / 2 + 20), 0),
                             label_font=fonts.Bold, text_font=fonts.Medium))
             except Exception as ex:
-                logging.debug('[apfakerV2] %s', ex) 
+                logging.debug('[APFaking] %s', ex) 
 
     def on_unload(self, ui):
         self.turn_off = True
@@ -143,7 +153,41 @@ class APFaking(plugins.Plugin):
         with ui._lock:
             try:
                 ui.remove_element('apfaking')
-                logging.info('[apfakerV2] plugin is unloading')
+                logging.info('[APFaking] plugin is unloading')
             except Exception as ex:
-                logging.debug('[apfakerV2] %s', ex)
+                logging.debug('[APFaking] %s', ex)
+                
+    def _run(self, agent):
+        shuffle(self.ssids)
+    
+        cnt = 0
+        base_list = self.ssids.copy()
+        while len(self.ssids) <= self.options['max'] and self.options['repeat']:
+            self.ssids.extend([f"{ssid}_{cnt}" for ssid in base_list])
+            cnt += 1
+    
+        frames = []
+        for idx, ssid in enumerate(self.ssids[:self.options['max']]):
+            try:
+                logging.info('[APFaking] creating fake ap with ssid "%s"', ssid)
+                frames.append(
+                    APFaking.create_beacon(
+                        ssid,
+                        password_protected=self.options['password_protected']
+                    )
+                )
+                self.ap_status = str(idx + 1)
+            except Exception as ex:
+                logging.debug('[APFaking] %s', ex)
+    
+        iface = agent.config()['main']['iface']
+    
+        while not self.shutdown:
+            if self.turn_off:
+                self.ap_status = "U"
+                break
+    
+            sendp(frames, iface=iface, verbose=False)
+            sleep(max(0.1, len(frames) / 100))
+
 
