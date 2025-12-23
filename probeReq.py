@@ -9,7 +9,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.1.8"
+    __version__ = "0.0.1.9"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
@@ -64,6 +64,8 @@ class probeReq(plugins.Plugin):
     def on_bcap_wifi_client_probe(self, agent, event):
         """WIFI CLIENT PROBE REQUEST"""
         if not self.running:
+            if "logging" in self.options and self.options["logging"]:
+                logging.info(f"[{self.__class__.__name__}]: plugin stopped running")
             return
 
         probe = event["data"]
@@ -92,4 +94,3 @@ class probeReq(plugins.Plugin):
                 logging.info(f"[{self.__class__.__name__}] plugin unloaded")
             except Exception as e:
                 logging.error(f"[{self.__class__.__name__}] unload: %s" % e)
-
