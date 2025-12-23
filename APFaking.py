@@ -10,13 +10,12 @@ from time import sleep
 from scapy.all import Dot11, Dot11Beacon, Dot11Elt, RadioTap, sendp, RandMAC
 import threading
 
-
 class APFaking(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __editor__ = 'avipars'
-    __version__ = '2.0.4.4'
+    __version__ = '2.0.4.5'
     __license__ = 'GPL3'
-    __description__ = 'Creates fake aps.'
+    __description__ = 'Creates fake aps. Useful to confuse wardrivers and for testing. '
     __dependencies__ = {
         'pip': ['scapy'],
     }
@@ -27,13 +26,16 @@ class APFaking(plugins.Plugin):
         'repeat': True,
         'password_protected': False,
     }
+    #https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py
 
     def __init__(self):
-        self.options = dict()
-        self.shutdown = False
-        self.ready = True
+        self.options = {}
+        
+        self.ready = False
         self.ap_status = "I"
-        self.turn_off = False
+        self._thread = None
+        self._stop_event = threading.Event()
+        self._frames = []
 
     @staticmethod
     def create_beacon(name, password_protected=False):
@@ -62,30 +64,28 @@ class APFaking(plugins.Plugin):
         return RadioTap()/dot11/beacon/essid/rsn
 
     def on_loaded(self):
-        if isinstance(self.options['ssids'], str):
-            logging.error('[APFaking] loading as str %s', self.options['ssids'])
-            path = self.options['ssids']
+        ssids_opt = self.options.get('ssids', None)
 
-            if not os.path.exists(path):
-                self.ssids = [path]
-            else:
+        if isinstance(ssids_opt, str):
+            if os.path.exists(ssids_opt):
                 try:
-                    with open(path) as wordlist:
-                        self.ssids = wordlist.read().split()
-                except OSError as oserr:
-                    logging.error('[APFaking] %s', oserr)
+                    with open(ssids_opt) as f:
+                        self.ssids = f.read().split()
+                except OSError as e:
+                    logging.error('[apfaker] %s', e)
                     return
-        elif isinstance(self.options['ssids'], list):
-            self.ssids = self.options['ssids']
-            logging.error('[APFaking] loading as list %s', self.options['ssids'])
+            else:
+                self.ssids = [ssids_opt]
 
+        elif isinstance(ssids_opt, list):
+            self.ssids = ssids_opt
         else:
-            logging.error('[APFaking] wtf is %s', self.options['ssids'])
+            logging.error('[apfaker] invalid ssids option')
             return
 
         self.ready = True
-        logging.info('[APFaking] plugin loaded')
-        self.shutdown = False
+        logging.info('[apfaker] plugin loaded')
+
 
     def on_ui_update(self, ui):
         ui.set("apfaking", "%s" % (self.ap_status))
@@ -94,48 +94,64 @@ class APFaking(plugins.Plugin):
         if not self.ready:
             logging.info('[APFaking] exiting ready, shutdown')
             return
-            
-        self.shutdown = False
-        self.turn_off = False
-        self.worker = threading.Thread(
-            target=self._run,
-            args=(agent,),
-            daemon=True)
-        self.worker.start()
 
-        logging.info('[APFaking] worker thread started')
+
+        logging.info('[APFaking] on_ready started')
         shuffle(self.ssids)
 
         cnt = 0
         base_list = self.ssids.copy()
+
+        self.ap_status =  str(cnt)
+
         while len(self.ssids) <= self.options['max'] and self.options['repeat']:
             self.ssids.extend([f"{ssid}_{cnt}" for ssid in base_list])
             cnt += 1
 
-        frames = list()
-        for idx, ssid in enumerate(self.ssids[:self.options['max']]):
+        self._frames.clear()
+        max_num = self.options.get('max', 10)
+        for idx, ssid in enumerate(self.ssids[:max_num]):
             try:
                 logging.info('[APFaking] creating fake ap with ssid "%s"', ssid)
-                frames.append(APFaking.create_beacon(ssid, password_protected=self.options['password_protected']))
+
+                frame = self.create_beacon(
+                    ssid,
+                    password_protected=self.options['password_protected']
+                )
+                self._frames.append(frame)
                 # agent.view().set('apfaking', str(idx + 1))
                 self.ap_status =  str(idx + 1)
             except Exception as ex:
                 logging.debug('[APFaking] %s', ex)
 
-        main_config = agent.config()
+        iface = agent.config()['main']['iface']
 
-        while not self.shutdown:
-            if self.turn_off:
-                self.ap_status =  "U"
-                logging.info('[APFaking] plugin turning off')
-                break
-            sendp(frames, iface=main_config['main']['iface'], verbose=False)
-            sleep(max(0.1, len(frames) / 100))
+        self._stop_event.clear()
+        self._thread = threading.Thread(
+            target=self._beacon_loop,
+            args=(iface,),
+            daemon=True
+        )
+        self._thread.start()
+
+        logging.info('[apfaker] beacon thread started')
+
+    def _beacon_loop(self, iface):
+        while not self._stop_event.is_set():
+            sendp(self._frames, iface=iface, verbose=False)
+            sleep(max(0.1, len(self._frames) / 100))
+
+        logging.info('[apfaker] beacon thread stopped')
+
+    def _stop(self):
+        self._stop_event.set()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2)
+        self._thread = None
 
     def on_before_shutdown(self):
-        self.turn_off = True
         self.ap_status =  "B"
-        self.shutdown = True
+        self._stop()
         logging.info('[APFaking] plugin before shutdown')
 
     def on_ui_setup(self, ui):
@@ -147,9 +163,9 @@ class APFaking(plugins.Plugin):
                 logging.debug('[APFaking] %s', ex) 
 
     def on_unload(self, ui):
-        self.turn_off = True
-        self.shutdown = True
         self.ap_status =  "U"
+
+        self._stop()
         with ui._lock:
             try:
                 ui.remove_element('apfaking')
@@ -157,37 +173,3 @@ class APFaking(plugins.Plugin):
             except Exception as ex:
                 logging.debug('[APFaking] %s', ex)
                 
-    def _run(self, agent):
-        shuffle(self.ssids)
-    
-        cnt = 0
-        base_list = self.ssids.copy()
-        while len(self.ssids) <= self.options['max'] and self.options['repeat']:
-            self.ssids.extend([f"{ssid}_{cnt}" for ssid in base_list])
-            cnt += 1
-    
-        frames = []
-        for idx, ssid in enumerate(self.ssids[:self.options['max']]):
-            try:
-                logging.info('[APFaking] creating fake ap with ssid "%s"', ssid)
-                frames.append(
-                    APFaking.create_beacon(
-                        ssid,
-                        password_protected=self.options['password_protected']
-                    )
-                )
-                self.ap_status = str(idx + 1)
-            except Exception as ex:
-                logging.debug('[APFaking] %s', ex)
-    
-        iface = agent.config()['main']['iface']
-    
-        while not self.shutdown:
-            if self.turn_off:
-                self.ap_status = "U"
-                break
-    
-            sendp(frames, iface=iface, verbose=False)
-            sleep(max(0.1, len(frames) / 100))
-
-
