@@ -154,7 +154,7 @@ TEMPLATE = """
         <strong>Descending</strong>
     {% endif %}
     |
-    <a href="?order={{ order }}&export=1">Export HTML</a>
+    <a href="?order={{ order }}&export=1">Export Results</a>
     </div>
     <table id="tableOptions">
         <tr>
@@ -186,7 +186,7 @@ TEMPLATE = """
 
 class sorted_pwn(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.2.4'
+    __version__ = '0.0.2.5'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -252,12 +252,31 @@ class sorted_pwn(plugins.Plugin):
                 )
 
                 if export:
-                    response = make_response(html)
-                    response.headers["Content-Type"] = "text/html"
+                    lines = []
+                    lines.append("SSID\tPassword\tOther")
+
+                    for p in sorted_passwords:
+                        other = p.get("other_fields")
+                        if isinstance(other, list):
+                            other = ", ".join(other)
+
+                        lines.append(
+                            "%s\t%s\t%s" % (
+                                p.get("ssid", ""),
+                                p.get("password", ""),
+                                other or ""
+                            )
+                        )
+
+                    txt_data = "\n".join(lines)
+
+                    response = make_response(txt_data)
+                    response.headers["Content-Type"] = "text/plain; charset=utf-8"
                     response.headers["Content-Disposition"] = (
-                        "attachment; filename=sorted_pwn_passwords_%s.html" % order
+                        "attachment; filename=sorted_pwn_passwords_%s.txt" % order
                     )
                     return response
+
 
                 return html
 
