@@ -13,12 +13,12 @@ from PIL import ImageFont
 class better_console(plugins.Plugin):
     __author__ = 'Sniffleupagus'
     __editor__ = 'avipars'
-    __version__ = '1.0.0.2'
+    __version__ = '1.0.0.4'
     __license__ = 'GPL3'
     __description__ = 'An improved console scrolling status updates'
     __defaults__ = {
         "enabled": False,
-        "hide_time": True
+        "hide_time": False
     }
     def __init__(self):
         self._console = [ "%s - Pwnagotchi Console %s" % (datetime.now().strftime('%c'), self.__version__) ]
@@ -28,9 +28,13 @@ class better_console(plugins.Plugin):
     def addConsole(self, msg):
         try:
             logging.debug("console: %s" % msg)
-            if 'hide_time' in self.options and not self.options['hide_time']:
-                now = datetime.now().strftime('%X')
-                self._console.append('%s %s' % (now, msg))
+
+            now = datetime.now().strftime('%X')
+            self._console.append('%s %s' % (now, msg))
+
+            # if 'hide_time' in self.options and not self.options['hide_time']:
+            #     now = datetime.now().strftime('%X')
+            #     self._console.append('%s %s' % (now, msg))
 
             if len(self._console) > self.options['showLines']:
                 m = self._console.pop(0)
@@ -43,7 +47,6 @@ class better_console(plugins.Plugin):
     # called when the plugin is loaded
     def on_loaded(self):
         logging.warning("Console options = " % self.options)
-
         self.options['showLines'] = self.options.get('showLines', 3)
 
     # called before the plugin is unloaded

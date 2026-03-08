@@ -43,7 +43,7 @@ class probeReq(plugins.Plugin):
                 self.pos_y = int(self.options.get("pos_y", 75))
 
             logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
-            
+            label_spacing=4
             ui.add_element(
                 "pr_status",
                 LabeledValue(
@@ -53,6 +53,7 @@ class probeReq(plugins.Plugin):
                     position=(self.pos_x, self.pos_y),
                     label_font=fonts.Small,
                     text_font=fonts.Small,
+                    label_spacing=label_spacing
                 ),
             )
         except Exception as e:
