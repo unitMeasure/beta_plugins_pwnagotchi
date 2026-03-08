@@ -82,7 +82,7 @@ class git_backup(plugins.Plugin):
         self.interval = self.options.get('interval', 2) * 3600  # hours -> seconds (default 2 hours)
         self.extra_files = self.options.get('extra_files', [])
         self.ssh_key = self.options.get('ssh_key', '/home/pi/.ssh/id_rsa')
-        self.show_status = self.options.get('show_status', False)
+        self.show_status = self.options.get('show_status', True)
 
         # Validate SSH key exists
         if not os.path.exists(self.ssh_key):
@@ -133,13 +133,14 @@ class git_backup(plugins.Plugin):
 
     # called before the plugin is unloaded
     def on_unload(self, ui):
-        try:
-            # remove UI elements
-            with ui._lock:
-                ui.remove_element("git_status")
-            
-        except Exception as e:
-            logging.warning("Unload: %s" % e)
+        if self.show_status:
+            try:
+                # remove UI elements
+                with ui._lock:
+                    ui.remove_element("git_status")
+                
+            except Exception as e:
+                logging.warning("Unload: %s" % e)
 
     def _git_env(self):
         """Environment variables for git with SSH key"""
