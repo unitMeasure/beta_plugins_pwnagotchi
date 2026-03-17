@@ -99,7 +99,7 @@ class git_backup(plugins.Plugin):
             pos = self.options.get('position', (ui.width() - 35, 0))
             self.options['position'] = pos
             logging.info(f"[git-backup] positon: {pos}")
-            
+
             with ui._lock:
                 ui.add_element('git_backup', LabeledValue(
                     color=BLACK,
@@ -696,6 +696,8 @@ sudo cp -r etc/pwnagotchi /etc/
             color: rgba(255, 255, 255, 0.4);
             text-decoration: none;
             transition: color 0.2s;
+            display: block;
+            margin-top: 5px; /* optional spacing between lines */
         }}
         .footer a:hover {{
             color: rgba(255, 255, 255, 0.7);
