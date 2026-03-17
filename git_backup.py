@@ -15,7 +15,7 @@ import json
 
 class git_backup(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '2.1.0.2'
+    __version__ = '2.1.0.3'
     __license__ = 'GPL3'
     __description__ = 'Simple Git backup for Pwnagotchi - mirrors files to GitHub with auto-restore script'
 
@@ -701,11 +701,8 @@ sudo cp -r etc/pwnagotchi /etc/
 <body>
     <div class="container">
         <div class="header">
-            <div>
-                <div class="icon">📦</div>
-                <h1>Git Backup</h1>
-            </div>
-             <a href="/plugins" class="plugin-btn" id="pluginBtn">Plugins</a>
+            <div class="icon">📦</div>
+            <h1>Git Backup</h1>
         </div>
         {message}
         <div class="status-card">
@@ -715,7 +712,8 @@ sudo cp -r etc/pwnagotchi /etc/
         </div>
         <a href="?backup=1" class="backup-btn" id="backupBtn" onclick="startBackup(event)">Backup Now</a>
         <div class="footer">
-            <a href="https://github.com/wpa-2/pwnagotchi-plugins" target="_blank">Pwnagotchi Git Backup v2.1.0.2</a>
+            <a href="/plugins" class="plugin-btn" id="pluginBtn">Plugins</a>
+            <a href="https://github.com/wpa-2/pwnagotchi-plugins" target="_blank">Pwnagotchi Git Backup v2.1.0.3</a>
         </div>
     </div>
     <script>
