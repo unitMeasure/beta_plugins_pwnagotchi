@@ -20,6 +20,8 @@ class probeReq(plugins.Plugin):
         "logging": False,
     }
 
+    LINE_SPACING = 8   # 8 - stuck together, 10 = better
+
     def __init__(self):
         self.ready = False
         self.title = ""
@@ -27,9 +29,13 @@ class probeReq(plugins.Plugin):
         self.pr_status = "Waiting"
         self.pos_x = 0
         self.pos_y = 75
-
+        self.show_verbose = False
+        self.log_results = False
+        
     def on_loaded(self):
         self.pr_status = "Waiting."
+        self.show_verbose = self.options.get("verbose", False)
+        self.log_results = self.options.get("logging", False)
 
     def on_ready(self, agent):
         self.pr_status = "Waiting.."
@@ -74,21 +80,22 @@ class probeReq(plugins.Plugin):
 
         probe = event["data"]
         d_name = probe["essid"]
+        if self.log_results:
+            logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
 
+        
         stat = "pr:%s" % d_name[0:20] # limit essid to 20 chars
-
-        if "verbose" in self.options and self.options["verbose"]:
+        if self.show_verbose:
             stat += " rssi:%s" % probe["rssi"]
             vend = probe["vendor"]
 
             if vend and len(vend) >= 1: # has a vendor
-               stat += "\n" + "ven:%s" % vend[0:15] # limit vendor to 15 chars
+               stat += "\n" + "v:%s" % vend[0:15] # limit vendor to 15 chars
 
             stat += "\n" + "mac:%s" % probe["mac"] # full mac address
         
         self.pr_status = stat
-        if "logging" in self.options and self.options["logging"]:
-            logging.info(f"[{self.__class__.__name__}]: Probe %s" % (probe))
+       
 
     def on_unload(self, ui):
         self.running = False

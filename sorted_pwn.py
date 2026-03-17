@@ -1,5 +1,4 @@
 import logging
-import json
 import os
 import glob
 import pwnagotchi.plugins as plugins
@@ -186,7 +185,7 @@ TEMPLATE = """
 
 class sorted_pwn(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.2.5'
+    __version__ = '0.0.2.6'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -209,7 +208,7 @@ class sorted_pwn(plugins.Plugin):
                 order = request.args.get("order", "asc").lower()
                 reverse_sort = order == "desc"
                 export = request.args.get("export", "0") == "1"
-
+                show_other = request.args.get("show_other", "0") == "1" # TODO hide other fields in table if user wants
                 base_dir = self.config['bettercap']['handshakes']
                 potfile_paths = glob.glob(os.path.join(base_dir, "*.potfile"))
 
@@ -228,7 +227,7 @@ class sorted_pwn(plugins.Plugin):
                             # to deal with both pwncrack and wpa-sec format
                             ssid = fields[-2].strip() # 2nd to last
                             password = fields[-1].strip() # last one
-                            other_fields = fields[:-2]   # everything before ssid/password
+                            other_fields = fields[:-2]   # everything before ssid/password (bssid, client)
 
                             key = (ssid, password)
                             if key not in unique_entries:
@@ -256,17 +255,26 @@ class sorted_pwn(plugins.Plugin):
                     lines.append("SSID\tPassword\tOther")
 
                     for p in sorted_passwords:
-                        other = p.get("other_fields")
-                        if isinstance(other, list):
-                            other = ", ".join(other)
 
-                        lines.append(
-                            "%s\t%s\t%s" % (
-                                p.get("ssid", ""),
-                                p.get("password", ""),
-                                other or ""
+                        if show_other:
+                            other = p.get("other_fields")
+                            if isinstance(other, list):
+                                other = ", ".join(other)
+
+                            lines.append(
+                                "%s:%s:%s" % (
+                                    p.get("ssid", ""),
+                                    p.get("password", ""),
+                                    other or ""
+                                )
                             )
-                        )
+                        else:
+                                lines.append(
+                                "%s:%s" % (
+                                    p.get("ssid", ""),
+                                    p.get("password", ""),
+                                )
+                            )
 
                     txt_data = "\n".join(lines)
 
@@ -276,8 +284,6 @@ class sorted_pwn(plugins.Plugin):
                         "attachment; filename=sorted_pwn_passwords_%s.txt" % order
                     )
                     return response
-
-
                 return html
 
               
