@@ -1,3 +1,5 @@
+# fork of https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/GitHub_Backups/git_backup.py
+
 import pwnagotchi.plugins as plugins
 import pwnagotchi.ui.fonts as fonts
 from pwnagotchi.ui.components import LabeledValue
@@ -11,10 +13,9 @@ import socket
 import fnmatch
 import json
 
-
 class git_backup(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '2.1.0.1'
+    __version__ = '2.1.0.2'
     __license__ = 'GPL3'
     __description__ = 'Simple Git backup for Pwnagotchi - mirrors files to GitHub with auto-restore script'
 
