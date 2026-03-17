@@ -84,7 +84,7 @@ class git_backup(plugins.Plugin):
         self.extra_files = self.options.get('extra_files', [])
         self.ssh_key = self.options.get('ssh_key', '/home/pi/.ssh/id_rsa')
         self.show_status = self.options.get('show_status', True)
-
+       
         # Validate SSH key exists
         if not os.path.exists(self.ssh_key):
             logging.error(f"[git-backup] SSH key not found: {self.ssh_key}")
@@ -96,12 +96,16 @@ class git_backup(plugins.Plugin):
 
     def on_ui_setup(self, ui):
         if self.show_status:
+            pos = self.options.get('position', (ui.width() - 35, 0))
+            self.options['position'] = pos
+            logging.info(f"[git-backup] positon: {pos}")
+            
             with ui._lock:
                 ui.add_element('git_backup', LabeledValue(
                     color=BLACK,
                     label='B',
                     value='---',
-                    position=(ui.width() - 25, 0),
+                    position=(pos[0], pos[1]),
                     label_font=fonts.Small,
                     text_font=fonts.Small
                 ))
