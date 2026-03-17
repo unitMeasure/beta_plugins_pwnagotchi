@@ -41,7 +41,7 @@ class probeReq(plugins.Plugin):
             if "pos_y" in self.options:
                 self.pos_y = int(self.options.get("pos_y", 75))
 
-            font_size = self.options.get('font_size', int(ui._height/60))
+            font_height = self.options.get('font_size', int(ui._height/60))
             confont = ImageFont.truetype(fonts.FONT_NAME, size=font_height)
 
             logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
