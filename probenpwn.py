@@ -121,7 +121,7 @@ BULLY_PIN_REGEX = re.compile(r"\[P\]\s*PIN\s*=\s*(\d{8})")
 # Helper classes
 # ----------------------------------------------------------------------
 class TTLCache:
-    """Thread‑safe TTL cache with max size, using OrderedDict."""
+    """Thread-safe TTL cache with max size, using OrderedDict."""
     def __init__(self, maxsize: int, ttl: float):
         self.maxsize = maxsize
         self.ttl = ttl
@@ -232,7 +232,7 @@ class ProbeNpwn(plugins.Plugin):
     def __init__(self):
         super().__init__()
         self.logger = logging.getLogger(__name__)
-        self.logger.debug("ProbeNpwn v3.3.0 initializing")
+        self.logger.debug("ProbeNpwn v3.3.0.1 initializing")
 
         self.config = {}
         self.agent = None
@@ -710,13 +710,13 @@ class ProbeNpwn(plugins.Plugin):
             self.enable_cf_end = False
             self.enable_mimo = False
             self.pmf_bypass_methods = []
-            self.logger.info("Scapy‑dependent attacks disabled")
+            self.logger.info("Scapy-dependent attacks disabled")
 
     # ------------------------------------------------------------------
     # on_loaded
     # ------------------------------------------------------------------
     def on_loaded(self):
-        self.logger.info("ProbeNpwn v3.3.0 loaded")
+        self.logger.info("ProbeNpwn v3.3.0.1 loaded")
         os.makedirs(os.path.dirname(DEFAULT_BLACKLIST_PATH), exist_ok=True)
         os.makedirs(os.path.dirname(DEFAULT_LOG_PATH), exist_ok=True)
         os.makedirs(os.path.dirname(DEFAULT_STATE_PATH), exist_ok=True)
