@@ -14,7 +14,7 @@ class Better_APFaker(plugins.Plugin):
     __GitHub__ = "https://github.com/itsdarklikehell/pwnagotchi-plugins/blob/master/better_apfaker.py"
     __author__ = "33197631+dadav@users.noreply.github.com"
     __editor__ = "(edited by: itsdarklikehell bauke.molenaar@gmail.com), avipars"
-    __version__ = "2.0.5.2"
+    __version__ = "2.0.5.3"
     __license__ = "GPL3"
     __description__ = "Creates fake aps."
     __name__ = "Better_APFaker"
@@ -66,6 +66,12 @@ class Better_APFaker(plugins.Plugin):
 
         return RadioTap() / dot11 / beacon / essid / rsn
 
+    def _unwrap(val):
+        try:
+            return val.value
+        except AttributeError:
+            return val
+            
     def on_loaded(self):
         if isinstance(self.options["ssids"], str):
             path = self.options["ssids"]
@@ -95,11 +101,14 @@ class Better_APFaker(plugins.Plugin):
         shuffle(self.ssids)
         cnt = 0
         base_list = self.ssids.copy()
-        while len(self.ssids) <= self.options["max"] and self.options["repeat"]:
+
+        max_num = int(_unwrap(self.options.get("max", 3)))
+
+        while len(self.ssids) <= max_num and self.options["repeat"]:
             self.ssids.extend([f"{ssid}_{cnt}" for ssid in base_list])
             cnt += 1
         frames = list()
-        for idx, ssid in enumerate(self.ssids[: self.options["max"]]):
+        for idx, ssid in enumerate(self.ssids[: max_num]):
             try:
                 if not self.stop:
                     logging.info(
