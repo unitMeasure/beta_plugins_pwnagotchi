@@ -13,7 +13,7 @@ class apfakerV2(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __GitHub__ = "https://github.com/dadav/pwnagotchi-custom-plugins/blob/master/apfaker.py"
     __editor__ = 'avipars'
-    __version__ = '2.0.5.5'
+    __version__ = '2.0.5.6'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps, now with minor improvements'
     __dependencies__ = {
@@ -58,8 +58,10 @@ class apfakerV2(plugins.Plugin):
         return RadioTap()/dot11/beacon/essid/rsn
 
     def on_loaded(self):
-        if isinstance(self.options['ssids'], str):
-            path = self.options['ssids']
+        ssids_opt = self.options.get('ssids', None)
+
+        if isinstance(ssids_opt, str):
+            path = ssids_opt
 
             if not os.path.exists(path):
                 self.ssids = [path]
@@ -70,10 +72,11 @@ class apfakerV2(plugins.Plugin):
                 except OSError as oserr:
                     logging.error('[apfakerV2] %s', oserr)
                     return
-        elif isinstance(self.options['ssids'], list):
-            self.ssids = self.options['ssids']
+        elif isinstance(ssids_opt, list):
+            self.ssids = ssids_opt
         else:
-            logging.error('[apfakerV2] wtf is %s', self.options['ssids'])
+            self.ssids = ['5G TEST CELL TOWER', 'FBI Van', 'NSA Surveillance Van', 'CIA Listening Post', 'FBI Surveillance Van']
+            logging.error('[apfakerV2] wtf is %s',ssids_opt)
             return
 
         self.ready = True

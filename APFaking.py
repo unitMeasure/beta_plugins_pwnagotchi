@@ -13,7 +13,7 @@ import threading
 class APFaking(plugins.Plugin):
     __author__ = '33197631+dadav@users.noreply.github.com'
     __editor__ = 'avipars'
-    __version__ = '2.0.4.5'
+    __version__ = '2.0.4.6'
     __license__ = 'GPL3'
     __description__ = 'Creates fake aps. Useful to confuse wardrivers and for testing. '
     __dependencies__ = {
@@ -72,7 +72,7 @@ class APFaking(plugins.Plugin):
                     with open(ssids_opt) as f:
                         self.ssids = f.read().split()
                 except OSError as e:
-                    logging.error('[apfaker] %s', e)
+                    logging.error('[APFaking] %s', e)
                     return
             else:
                 self.ssids = [ssids_opt]
@@ -80,11 +80,13 @@ class APFaking(plugins.Plugin):
         elif isinstance(ssids_opt, list):
             self.ssids = ssids_opt
         else:
-            logging.error('[apfaker] invalid ssids option')
+            # use internal list
+            self.ssids == ['5G TEST CELL TOWER', 'FBI Van', 'NSA Surveillance Van', 'CIA Listening Post', 'FBI Surveillance Van'] 
+            logging.error('[APFaking] invalid ssids option')
             return
 
         self.ready = True
-        logging.info('[apfaker] plugin loaded')
+        logging.info('[APFaking] plugin loaded')
 
 
     def on_ui_update(self, ui):
@@ -134,14 +136,14 @@ class APFaking(plugins.Plugin):
         )
         self._thread.start()
 
-        logging.info('[apfaker] beacon thread started')
+        logging.info('[APFaking] beacon thread started')
 
     def _beacon_loop(self, iface):
         while not self._stop_event.is_set():
             sendp(self._frames, iface=iface, verbose=False)
             sleep(max(0.1, len(self._frames) / 100))
 
-        logging.info('[apfaker] beacon thread stopped')
+        logging.info('[APFaking] beacon thread stopped')
 
     def _stop(self):
         self._stop_event.set()
