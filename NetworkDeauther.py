@@ -6,7 +6,7 @@ import time
 
 class NetworkDeauther(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.2.2'
+    __version__ = '0.0.2.3'
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __license__ = 'GPL3'
     __description__ = 'A Pwnagotchi plugin to scan for Wi-Fi networks and deauth clients. Proceed with caution and ensure compliance with local laws.'
@@ -138,7 +138,7 @@ class NetworkDeauther(plugins.Plugin):
                             'channel': channel,
                             'clients': set()  # Track client MACs
                         }
-                        logging.info(f"[NetworkDeauther] Found open network: SSID={ssid}, BSSID={bssid}, Channel={channel}")
+                        logging.info(f"[NetworkDeauther] Found network: SSID={ssid}, BSSID={bssid}, Channel={channel}")
             # Handle data frames to find associated clients
             elif packet.haslayer(Dot11) and packet.type == 2:  # Data frames
                 bssid = packet[Dot11].addr3
