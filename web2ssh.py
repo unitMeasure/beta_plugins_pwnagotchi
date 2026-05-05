@@ -6,7 +6,7 @@ from functools import wraps
 
 class web2ssh(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '0.1.2'
+    __version__ = '0.1.2.1'
     __license__ = 'GPL3'
     __description__ = 'A Plugin to issue SSH commands via a browser'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
@@ -37,7 +37,7 @@ class web2ssh(plugins.Plugin):
         self.app.run(host='::', port=self.options["port"])
 
     def on_webhook(self, path, request):
-        # open the url for 8082
+        # open the url to redirect to webpage
         """Handle webhook requests by redirecting to the web2ssh interface."""
         from flask import redirect
         return redirect(f"http://{request.host.split(':')[0]}:{self.options['port']}/", code=302)
@@ -164,6 +164,11 @@ class web2ssh(plugins.Plugin):
                                 <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="cat /etc/pwnagotchi/config.toml">
                                 <button type="submit">View Config</button>
+                            </form>
+                            </form>
+                                <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="lsusb && iwconfig">
+                                <button type="submit">Check WiFi</button>
                             </form>
                         </div>
                     </div>
