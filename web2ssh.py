@@ -6,7 +6,7 @@ from functools import wraps
 
 class web2ssh(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '0.1.2.1'
+    __version__ = '0.1.3'
     __license__ = 'GPL3'
     __description__ = 'A Plugin to issue SSH commands via a browser'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
