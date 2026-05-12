@@ -4,7 +4,7 @@ from flask import Flask, request, render_template_string, Response
 import pwnagotchi.plugins as plugins
 from functools import wraps
 
-class web2ssh(plugins.Plugin):
+class web2ssh2(plugins.Plugin):
     __author__ = 'WPA2'
     __version__ = '0.1.3'
     __license__ = 'GPL3'
@@ -24,9 +24,9 @@ class web2ssh(plugins.Plugin):
 
         # Initialize self.options with default values
         self.options = {
-            "username": self.config.get("main.plugins.web2ssh.username", "changeme"),
-            "password": self.config.get("main.plugins.web2ssh.password", "changeme"),
-            "port": self.config.get("main.plugins.web2ssh.port", 8082),
+            "username": self.config.get("main.plugins.web2ssh2.username", "changeme"),
+            "password": self.config.get("main.plugins.web2ssh2.password", "changeme"),
+            "port": self.config.get("main.plugins.web2ssh2.port", 8082),
         }
 
         logging.debug(f"web2ssh config: {self.options}")
