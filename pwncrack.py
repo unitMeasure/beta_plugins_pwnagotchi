@@ -7,10 +7,12 @@ import socket
 from pwnagotchi.plugins import Plugin
 import pwnagotchi
 
-class UploadConvertPluginV2(Plugin):
+class UploadConvertPlugin(Plugin):
     __author__ = 'Terminatoror'
-    __version__ = '1.0.1.5'
+    __version__ = '1.0.2'
     __license__ = 'GPL3'
+    __GitHub__ = "https://github.com/Terminatoror/pwncrack-addon/"
+
     __description__ = 'Converts .pcap files to .hc22000 and uploads them to pwncrack.org when internet is available.'
 
     def __init__(self):
@@ -33,7 +35,6 @@ class UploadConvertPluginV2(Plugin):
         self.timewait = self.options.get('timewait', 600)
 
     def on_internet_available(self, agent):
-        display = agent.view()
         current_time = time.time()
         remaining_wait_time = self.timewait - (current_time - self.last_run_time)
         if remaining_wait_time > 0:
@@ -44,9 +45,7 @@ class UploadConvertPluginV2(Plugin):
             logging.warn("PWNCrack enabled, but no api key specified. Add a key to config.toml")
             return
 
-        display.set('status', f"[pwncrack] Running upload process. waiting: {self.timewait} seconds.")
-        display.update(force=True)
-
+        logging.info(f"[pwncrack] Running upload process. waiting: {self.timewait} seconds.")
         try:
             self._convert_and_upload()
             self._download_potfile()
@@ -73,7 +72,6 @@ class UploadConvertPluginV2(Plugin):
             if not os.path.exists(self.combined_file):
                 open(self.combined_file, 'w').close()
 
-          
             # Upload the combined .hc22000 file
             with open(self.combined_file, 'rb') as file:
                 files = {'handshake': file}
