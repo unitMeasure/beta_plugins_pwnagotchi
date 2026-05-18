@@ -417,7 +417,7 @@ class ProbeNpwn(plugins.Plugin):
     # Helper: check if external tool exists
     # ------------------------------------------------------------------
     def _check_tool(self, name: str) -> bool:
-    """Improved tool check that tries multiple version/help flags and full paths."""
+        """Improved tool check that tries multiple version/help flags and full paths."""
         paths = ['/usr/bin/', '/usr/sbin/', '/usr/local/bin/', '']
         cmds = [f"{name} --version", f"{name} -v", f"{name} -h", f"{name} --help"]
         for base in paths:
