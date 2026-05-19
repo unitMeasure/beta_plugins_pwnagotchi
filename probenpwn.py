@@ -209,6 +209,18 @@ class AdaptiveTokenBucket(TokenBucket):
             self.successes = 0
 
 
+class PrefixedLoggerAdapter(logging.LoggerAdapter):
+    """Ensures all plugin log messages start with the expected prefix."""
+    prefix = "[probenpwn]"
+
+    def process(self, msg, kwargs):
+        text = str(msg)
+        if not text.startswith(self.prefix):
+            separator = "" if text.startswith((" ", "\t", "\n", "\r", "\f", "\v")) else " "
+            msg = f"{self.prefix}{separator}{text}"
+        return msg, kwargs
+
+
 # ----------------------------------------------------------------------
 # Main Plugin Class
 # ----------------------------------------------------------------------
@@ -220,7 +232,7 @@ class ProbeNpwn(plugins.Plugin):
 
     def __init__(self):
         super().__init__()
-        self.logger = logging.getLogger(__name__)
+        self.logger = PrefixedLoggerAdapter(logging.getLogger(__name__), {})
         self.logger.debug("ProbeNpwn v3.3.0 initializing")
 
         self.config = {}
