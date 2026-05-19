@@ -26,7 +26,7 @@ class web2ssh2(plugins.Plugin):
         self.options = {
             "username": self.config.get("main.plugins.web2ssh2.username", "changeme"),
             "password": self.config.get("main.plugins.web2ssh2.password", "changeme"),
-            "port": self.config.get("main.plugins.web2ssh2.port", 8082),
+            "port": self.config.get("main.plugins.web2ssh2.port", 8083),
         }
 
         logging.debug(f"web2ssh2 config: {self.options}")
