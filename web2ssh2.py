@@ -6,21 +6,21 @@ from functools import wraps
 
 class web2ssh2(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '0.1.3'
+    __version__ = '0.1.3.1'
     __license__ = 'GPL3'
     __description__ = 'A Plugin to issue SSH commands via a browser'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
 
     def __init__(self, config=None):
         super().__init__()
-        logging.debug("web2ssh created")
+        logging.debug("web2ssh2 created")
         self.app = Flask(__name__)
         self.config = config or {}
         self.options = {}
 
     def on_loaded(self):
         """Called when the plugin is loaded."""
-        logging.info("web2ssh loaded")
+        logging.info("web2ssh2 loaded")
 
         # Initialize self.options with default values
         self.options = {
@@ -29,7 +29,7 @@ class web2ssh2(plugins.Plugin):
             "port": self.config.get("main.plugins.web2ssh2.port", 8082),
         }
 
-        logging.debug(f"web2ssh config: {self.options}")
+        logging.debug(f"web2ssh2 config: {self.options}")
 
         # Set up Flask routes and start the server
         self.app.before_request(self.requires_auth)  # Attach auth check to all routes
@@ -52,7 +52,7 @@ class web2ssh2(plugins.Plugin):
                 <html lang="en">
                 <head>
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>WEB2SSH Command Executor</title>
+                    <title>WEB2SSH2 Command Executor</title>
                     <style>
                         body {
                             font-family: Arial, sans-serif;
@@ -121,7 +121,7 @@ class web2ssh2(plugins.Plugin):
                 </head>
                 <body>
                     <div class="container">
-                        <h1>WEB2SSH Command Executor</h1>
+                        <h1>WEB2SSH2 Command Executor</h1>
                         <form action="/execute" method="post">
                             <input type="text" id="commandInput" name="command" placeholder="Enter command" required>
                             <input type="submit" value="Execute">
@@ -272,9 +272,9 @@ class web2ssh2(plugins.Plugin):
             'Unauthorized access. Please provide valid credentials.',
             status=401
         )
-        response.headers['WWW-Authenticate'] = 'Basic realm="web2ssh"'
+        response.headers['WWW-Authenticate'] = 'Basic realm="web2ssh2"'
         return response
 
     def on_unload(self, ui):
         """Called when the plugin is unloaded."""
-        logging.info("web2ssh unloaded")
+        logging.info("web2ssh2 unloaded")
