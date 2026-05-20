@@ -219,7 +219,7 @@ class AdaptiveTokenBucket(TokenBucket):
 # ----------------------------------------------------------------------
 class ProbeNpwn(plugins.Plugin):
     __author__ = 'AlienMajik'
-    __version__ = '3.3.1.1'
+    __version__ = '3.3.1'
     __license__ = 'GPL3'
     __description__ = 'Ultimate handshake/PMKID capture – with quiet association attacks and WPS PIN saving.'
 

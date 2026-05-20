@@ -3,6 +3,7 @@ import html
 import shutil
 import logging
 import subprocess
+import shutil
 
 import pwnagotchi.plugins as plugins
 
@@ -56,6 +57,102 @@ class diagnostics(plugins.Plugin):
             return f'<span class="highlight">FOUND</span> ({html.escape(path)})'
 
         return '<span class="bad">NOT FOUND</span>'
+
+    def _check_tool(self, name: str) -> bool:
+        res = None
+        try:
+            subprocess.run([name, '--version'], capture_output=True, timeout=5)
+            res = f'found tool {name}'
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+            res = None
+
+        if path:
+            return f'<span class="highlight">FOUND</span> ({html.escape(path)})'
+
+        return '<span class="bad">NOT FOUND</span>'
+
+    # ------------------------------------------------------------------
+    # Helper: check if external tool exists
+    # ------------------------------------------------------------------
+    def _check_tool(self, name: str) -> bool:
+        """
+        Better tool detection.
+
+        Some tools:
+        - return non-zero on --help
+        - return non-zero on --version
+        - require arguments and still print valid output
+        - print usage to stderr
+
+        So we:
+        1. verify binary exists in PATH
+        2. try several common flags
+        3. treat meaningful output as success
+        """
+
+        # First: make sure binary exists
+        binary_path = shutil.which(name)
+
+        if not binary_path:
+            return False
+
+        cmds = [
+            [name, '--version'],
+            [name, '-V'],
+            [name, '-v'],
+            [name, '--help'],
+            [name, '-h']
+        ]
+
+        success_keywords = [
+            "usage",
+            "help",
+            "version",
+            "v1.",
+            "v2.",
+            "v3.",
+            "options",
+            "syntax",
+            "mdk4",
+            "reaver",
+            "bully",
+            "hcxdumptool",
+            "aircrack",
+            "aireplay"
+        ]
+
+        for cmd in cmds:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+
+                output = (
+                    (result.stdout or "") +
+                    (result.stderr or "")
+                ).strip().lower()
+
+                # Many security tools return non-zero
+                # even when working properly.
+                # So check for meaningful output instead.
+                if output:
+                    for keyword in success_keywords:
+                        if keyword in output:
+                            return True
+
+            except subprocess.TimeoutExpired:
+                continue
+
+            except FileNotFoundError:
+                return False
+
+            except Exception:
+                continue
+
+        return False
 
     def _test_binary(self, name):
         cmds = [
@@ -236,11 +333,9 @@ class diagnostics(plugins.Plugin):
 
             {self._build_command_blocks("Bully Tests", bully_results)}
 
-
             {self._build_command_blocks("MDK4 Tests", mdk4_results)}
 
             {self._build_command_blocks("aireplay-ng Tests", aireplay_results)}
-
 
             {self._build_command_blocks("hcxdumptool Tests", hcxdumptool_results)}
 
