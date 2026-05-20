@@ -106,6 +106,11 @@ TIME_PERIODS = {
 REAVER_PIN_REGEX = re.compile(r"WPS PIN:\s*'?(\d{8})'?")
 BULLY_PIN_REGEX = re.compile(r"\[P\]\s*PIN\s*=\s*(\d{8})")
 
+class PrefixAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        # Prepend your fixed word to the original message
+        return f'{self.extra["prefix"]} {msg}', kwargs
+
 # ----------------------------------------------------------------------
 # Helper classes
 # ----------------------------------------------------------------------
@@ -220,7 +225,8 @@ class ProbeNpwn(plugins.Plugin):
 
     def __init__(self):
         super().__init__()
-        self.logger = logging.getLogger(__name__)
+        self.base_logger  = logging.getLogger(__name__)
+        self.logger = PrefixAdapter(base_logger, {'prefix': '[ProbeNpwn]'})
         self.logger.debug("ProbeNpwn v3.3.0 initializing")
 
         self.config = {}
@@ -428,7 +434,8 @@ class ProbeNpwn(plugins.Plugin):
                     if res.returncode in (0, 1):  # many tools return 1 on help
                         self.logger.debug(f"Tool {name} detected successfully")
                         return True
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(f"Encountered error in _check_tool {str(e)}")
                     continue
         self.logger.debug(f"Tool {name} not detected")
         return False
