@@ -32,7 +32,7 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.2"
+    __version__ = "1.0.3"
     __license__ = "GPL3"
     __description__ = "Sends Helpful Discord notifications when bt-tether connects"
 
@@ -54,9 +54,9 @@ class BTHelperDiscord2(Plugin):
 
         mem = self._mem_usage()
         load = self._cpu_load()
-        stat = self._cpu_stat()
+        stat = str(self._cpu_stat())
         tempt = self._cpu_temp()
-
+        uptim = self._uptime()
         logging.info(
             f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
@@ -71,6 +71,7 @@ class BTHelperDiscord2(Plugin):
                 {"name": "CPU Load", "value": load, "inline": True},
                 {"name": "CPU Stat", "value": stat, "inline": True},
                 {"name": "Temperature", "value": tempt, "inline": True},
+                {"name": "Uptime", "value": uptim, "inline": True},
                 {"name": "IP Address", "value": f"`{ip}`", "inline": True},
                 {
                     "name": "Web Interface",
@@ -148,6 +149,13 @@ class BTHelperDiscord2(Plugin):
     def _cpu_load(self):
         return f"{int(pwnagotchi.cpu_load() * 100)}%"
 
+    def _uptime(self):
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+            hours = int(uptime_seconds // 3600)
+            minutes = int((uptime_seconds % 3600) // 60)
+            return f"{hours}h {minutes}m"
+        
     def _cpu_stat(self):
         """
         Returns the split first line of the /proc/stat file

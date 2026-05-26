@@ -32,7 +32,7 @@ class BTTetherDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.2"
+    __version__ = "1.0.3"
     __license__ = "GPL3"
     __description__ = "Sends Detailed Discord notifications when bt-tether connects"
 
@@ -153,7 +153,7 @@ class BTTetherDiscord2(Plugin):
         Returns the split first line of the /proc/stat file
         """
         with open('/proc/stat', 'rt') as fp:
-            return list(map(int,fp.readline().split()[1:]))
+            return ", ".join(fp.readline().split()[1:])
 
     def _cpu_temp(self):
 
