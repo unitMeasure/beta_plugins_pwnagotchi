@@ -28,13 +28,13 @@ except ImportError:
     )
 
 
-class BTTetherDiscord2(Plugin):
+class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
     __version__ = "1.0.2"
     __license__ = "GPL3"
-    __description__ = "Sends Detailed Discord notifications when bt-tether connects"
+    __description__ = "Sends Helpful Discord notifications when bt-tether connects"
 
     
     def on_loaded(self):
