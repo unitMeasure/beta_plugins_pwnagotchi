@@ -32,9 +32,9 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.3"
+    __version__ = "1.0.3.1"
     __license__ = "GPL3"
-    __description__ = "Sends Helpful Discord notifications when bt-tether connects"
+    __description__ = "Sends discord notifications when bt-tether connects. This plugin sends pwnagotchi statistics too!"
 
     
     def on_loaded(self):
@@ -61,7 +61,7 @@ class BTHelperDiscord2(Plugin):
             f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
         self._notify(
-            title="🔷 Bluetooth HTethering Connected",
+            title="🔷 Bluetooth Tethering Connected",
             description=f"**{pwnagotchi_name}** is now connected on {ip}",
             color=3447003,  # Blue
             fields=[
@@ -108,20 +108,20 @@ class BTHelperDiscord2(Plugin):
             "description": description,
             "color": color,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-            "footer": {"text": "pwnagotchi \u00b7 bt-helper-discord2"},
+            "footer": {"text": "pwnagotchi \u00b7 bt-helper-discord2 1.0.3.1"},
         }
         if fields:
             embed["fields"] = fields
 
         payload = json.dumps({"embeds": [embed]}).encode("utf-8")
-
+        # User-Agent: DiscordBot ($url, $versionNumber)
         try:
             req = urllib.request.Request(
                 self.discord_webhook_url,
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "User-Agent": "Pwnagotchi-BT-Tether/1.0",
+                    "User-Agent": "DiscordBot (https://github.com/unitMeasure/beta_plugins_pwnagotchi, 1.0.3.1)",
                 },
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -174,7 +174,6 @@ class BTHelperDiscord2(Plugin):
             temp = pwnagotchi.temperature() + 273.15
             symbol = "K"
         else:
-            # default to celsius
             temp = pwnagotchi.temperature()
-            symbol = "C"
+            symbol = "C" # default to celsius
         return f"{temp}{symbol}"
