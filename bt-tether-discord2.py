@@ -24,7 +24,7 @@ try:
 except ImportError:
     URLLIB_AVAILABLE = False
     logging.warning(
-        "[bt-tethet-discord2] urllib not available, Discord notifications disabled"
+        "[bt-tether-discord2] urllib not available, Discord notifications disabled"
     )
 
 
@@ -32,7 +32,7 @@ class BTTetherDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.4"
+    __version__ = "1.0.5"
     __license__ = "GPL3"
     __description__ = "Sends Detailed Discord notifications when bt-tether connects"
 
@@ -61,7 +61,7 @@ class BTTetherDiscord2(Plugin):
             f"[bt-tether-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
         self._notify(
-            title="🔷 Bluetooth HTethering Connected",
+            title="🔷 Bluetooth Tethering Connected",
             description=f"**{pwnagotchi_name}** is now connected on {ip}",
             color=3447003,  # Blue
             fields=[
@@ -107,7 +107,7 @@ class BTTetherDiscord2(Plugin):
             "description": description,
             "color": color,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-            "footer": {"text": "pwnagotchi \u00b7 bt-helper-discord2"},
+            "footer": {"text": "pwnagotchi \u00b7 bt-tether-discord2"},
         }
         if fields:
             embed["fields"] = fields
@@ -156,9 +156,7 @@ class BTTetherDiscord2(Plugin):
             return ", ".join(fp.readline().split()[1:])
 
     def _cpu_temp(self):
-
-        scal = self.options.get('scale', 'celsius') # optional change
-
+        scal = self.options.get('scale', 'celsius') # optional to change
         if scal == "fahrenheit":
             temp = (pwnagotchi.temperature(celsius=False))
             symbol = "F"

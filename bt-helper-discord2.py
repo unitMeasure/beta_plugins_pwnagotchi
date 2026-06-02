@@ -32,9 +32,9 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.4"
+    __version__ = "1.0.5"
     __license__ = "GPL3"
-    __description__ = "Sends discord notifications when bt-tether connects. This plugin sends pwnagotchi statistics too!"
+    __description__ = "Sends discord notifications when bt-tether connects. It also sends statistics!"
 
     
     def on_loaded(self):
@@ -108,7 +108,7 @@ class BTHelperDiscord2(Plugin):
             "description": description,
             "color": color,
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
-            "footer": {"text": "pwnagotchi \u00b7 bt-helper-discord2 1.0.3.1"},
+            "footer": {"text": "pwnagotchi \u00b7 bt-helper-discord2 1.0.4"},
         }
         if fields:
             embed["fields"] = fields
@@ -121,7 +121,7 @@ class BTHelperDiscord2(Plugin):
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "User-Agent": "DiscordBot (https://github.com/unitMeasure/beta_plugins_pwnagotchi, 1.0.3.1)",
+                    "User-Agent": "DiscordBot (https://github.com/unitMeasure/beta_plugins_pwnagotchi, 1.0.4)",
                 },
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
