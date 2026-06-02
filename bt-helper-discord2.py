@@ -32,7 +32,7 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.3.1"
+    __version__ = "1.0.4"
     __license__ = "GPL3"
     __description__ = "Sends discord notifications when bt-tether connects. This plugin sends pwnagotchi statistics too!"
 
