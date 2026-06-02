@@ -5,7 +5,7 @@ Listens to bt-tether plugin events and forwards them to Discord via webhook.
 
 Configuration (config.toml):
 
-    [main.plugins.bt-helper-discord2]
+    [main.plugins.bt-tether-discord2]
     enabled = true
     discord_webhook_url = "https://discord.com/api/webhooks/..."  # required
     scale = "celsius" # optional celsius (default) kelvin or fahrenheit 
@@ -24,7 +24,7 @@ try:
 except ImportError:
     URLLIB_AVAILABLE = False
     logging.warning(
-        "[bt-helper-discord2] urllib not available, Discord notifications disabled"
+        "[bt-tethet-discord2] urllib not available, Discord notifications disabled"
     )
 
 
@@ -32,7 +32,7 @@ class BTTetherDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.3"
+    __version__ = "1.0.4"
     __license__ = "GPL3"
     __description__ = "Sends Detailed Discord notifications when bt-tether connects"
 
@@ -41,10 +41,10 @@ class BTTetherDiscord2(Plugin):
         self.discord_webhook_url = self.options.get("discord_webhook_url", "")
 
         if self.discord_webhook_url:
-            logging.info("[bt-helper-discord2] Loaded with Discord webhook configured")
+            logging.info("[bt-tether-discord2] Loaded with Discord webhook configured")
         else:
             logging.warning(
-                "[bt-helper-discord2] Loaded but no discord_webhook_url configured"
+                "[bt-tether-discord2] Loaded but no discord_webhook_url configured"
             )
 
     def on_bt_tether_connected(self, agent, event_data):
@@ -58,7 +58,7 @@ class BTTetherDiscord2(Plugin):
         tempt = self._cpu_temp()
 
         logging.info(
-            f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
+            f"[bt-tether-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
         self._notify(
             title="🔷 Bluetooth HTethering Connected",
@@ -126,21 +126,21 @@ class BTTetherDiscord2(Plugin):
             with urllib.request.urlopen(req, timeout=10) as resp:
                 if resp.status == 204:
                     logging.info(
-                        "[bt-helper-discord2] ✓ Discord notification sent successfully"
+                        "[bt-tether-discord2] ✓ Discord notification sent successfully"
                     )
                 else:
                     logging.warning(
-                        f"[bt-helper-discord2] Webhook returned status {resp.status}"
+                        f"[bt-tether-discord2] Webhook returned status {resp.status}"
                     )
         except urllib.error.HTTPError as e:
             error_body = e.read().decode("utf-8") if e.fp else ""
             logging.error(
-                f"[bt-helper-discord2] Webhook HTTP error {e.code}: {e.reason} {error_body}"
+                f"[bt-tether-discord2] Webhook HTTP error {e.code}: {e.reason} {error_body}"
             )
         except urllib.error.URLError as e:
-            logging.error(f"[bt-helper-discord2] Webhook network error: {e.reason}")
+            logging.error(f"[bt-tether-discord2] Webhook network error: {e.reason}")
         except Exception as e:
-            logging.error(f"[bt-helper-discord2] Webhook error: {e}")
+            logging.error(f"[bt-tether-discord2] Webhook error: {e}")
 
     def _mem_usage(self):
         return f"{int(pwnagotchi.mem_usage() * 100)}%"
