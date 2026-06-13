@@ -1,35 +1,34 @@
 import subprocess
 import logging
-from flask import Flask, request, render_template_string, Response
+from flask import Flask, request, render_template_string, Response, redirect
 import pwnagotchi.plugins as plugins
 from functools import wraps
 
 class web2ssh2(plugins.Plugin):
     __author__ = 'WPA2'
-    __version__ = '0.1.3.1'
+    __editor__ = 'avipars'
+    __version__ = '0.1.3.2'
     __license__ = 'GPL3'
     __description__ = 'A Plugin to issue SSH commands via a browser'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
 
-    def __init__(self, config=None):
+    def __init__(self):
         super().__init__()
         logging.debug("web2ssh2 created")
         self.app = Flask(__name__)
-        self.config = config or {}
-        self.options = {}
+        self.username = "changeme"
+        self.password = "changeme"
+        self.port = 8083
 
     def on_loaded(self):
         """Called when the plugin is loaded."""
         logging.info("web2ssh2 loaded")
 
-        # Initialize self.options with default values
-        self.options = {
-            "username": self.config.get("main.plugins.web2ssh2.username", "changeme"),
-            "password": self.config.get("main.plugins.web2ssh2.password", "changeme"),
-            "port": self.config.get("main.plugins.web2ssh2.port", 8083),
-        }
+        self.username = self.options.get("username", "changeme")
+        self.password = self.options.get("password", "changeme")
+        self.port = int(self.options.get("port", 8083))
 
-        logging.debug(f"web2ssh2 config: {self.options}")
+        logging.info(f"web2ssh2 configured: username={self.username}, port={self.port}")
 
         # Set up Flask routes and start the server
         self.app.before_request(self.requires_auth)  # Attach auth check to all routes
@@ -39,8 +38,7 @@ class web2ssh2(plugins.Plugin):
     def on_webhook(self, path, request):
         # open the url to redirect to webpage
         """Handle webhook requests by redirecting to the web2ssh interface."""
-        from flask import redirect
-        return redirect(f"http://{request.host.split(':')[0]}:{self.options['port']}/", code=302)
+        return redirect(f"http://{request.host.split(':')[0]}:{self.port}/", code=302)
 
     def _register_routes(self):
         """Register Flask routes."""
@@ -246,25 +244,16 @@ class web2ssh2(plugins.Plugin):
 
     def check_auth(self, username, password):
         """Check if username and password match."""
-        return username == self.options["username"] and password == self.options["password"]
+        return (username == self.username and password == self.password)
 
-    def requires_auth(self, f=None):
+    def requires_auth(self):
         """Enforce basic authentication."""
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            auth = request.authorization
-            if not auth or not self.check_auth(auth.username, auth.password):
-                return self._unauthorized_response()
-            return f(*args, **kwargs)
+        auth = request.authorization
 
-        # If no function is passed (e.g., as a before_request handler), just check auth
-        if f is None:
-            auth = request.authorization
-            if not auth or not self.check_auth(auth.username, self.options["password"]):
-                return self._unauthorized_response()
-            return None
+        if not auth or not self.check_auth(auth.username,auth.password):
+            return self._unauthorized_response()
 
-        return decorated
+        return None
 
     def _unauthorized_response(self):
         """Generate a 401 Unauthorized response with the WWW-Authenticate header."""
