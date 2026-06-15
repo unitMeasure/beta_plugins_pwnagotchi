@@ -7,7 +7,7 @@ from functools import wraps
 class web2ssh2(plugins.Plugin):
     __author__ = 'WPA2'
     __editor__ = 'avipars'
-    __version__ = '0.1.3.2'
+    __version__ = '0.1.3.3'
     __license__ = 'GPL3'
     __description__ = 'A Plugin to issue SSH commands via a browser'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
@@ -16,8 +16,8 @@ class web2ssh2(plugins.Plugin):
         super().__init__()
         logging.debug("web2ssh2 created")
         self.app = Flask(__name__)
-        self.username = "changeme"
-        self.password = "changeme"
+        self.username = ""
+        self.password = ""
         self.port = 8083
 
     def on_loaded(self):
@@ -151,12 +151,29 @@ class web2ssh2(plugins.Plugin):
                                 <button type="submit">Pwnkill</button>
                             </form>
                             <form action="/execute" method="post" style="display: inline;">
-                                <input type="hidden" name="command" value="ls /usr/local/share/pwnagotchi/custom-plugins">
-                                <button type="submit">Plugins</button>
+                                <input type="hidden" name="command" value="sudo systemctl restart pwnagotchi">
+                                <button type="submit">Restart pwn service</button>
                             </form>
-                                <form action="/execute" method="post" style="display: inline;">
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="ls /usr/local/share/pwnagotchi/custom-plugins">
+                                <button type="submit">List Plugins</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="sudo pwnagotchi plugins update">
+                                <button type="submit">Update Plugins</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="sudo pwnagotchi plugins upgrade">
+                                <button type="submit">Upgrade Plugins</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="systemctl status pwnagotchi --no-pager">
                                 <button type="submit">Status</button>
+                            </form>
+                            </form>
+                                <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="ethtool -i wlan0mon">
+                                <button type="submit">ethtool</button>
                             </form>
                             </form>
                                 <form action="/execute" method="post" style="display: inline;">
