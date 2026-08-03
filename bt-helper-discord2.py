@@ -34,14 +34,16 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.5.1"
+    __version__ = "1.0.5.2"
     __license__ = "GPL3"
-    __description__ = "Sends discord notifications when bt-tether connects. It also sends statistics!"
+    __description__ = (
+        "Sends discord notifications when bt-tether connects. It also sends statistics!"
+    )
     DEBOUNCE_SECONDS = 30
 
     COLOR_CONNECTED = 3447003  # Blue
     COLOR_DISCONNECTED = 15158332  # Re
-    
+
     def on_loaded(self):
         self.discord_webhook_url = self.options.get("discord_webhook_url", "")
 
@@ -58,7 +60,7 @@ class BTHelperDiscord2(Plugin):
                 "[bt-helper-discord2] Loaded but no discord_webhook_url configured"
             )
 
-     def _should_notify(self, state):
+    def _should_notify(self, state):
         """Return True if a notification for `state` should be sent right now.
 
         Suppresses duplicate same-state events inside DEBOUNCE_SECONDS, and only
@@ -68,7 +70,10 @@ class BTHelperDiscord2(Plugin):
             now = time.monotonic()
             if state == "disconnected" and self._last_state != "connected":
                 return False
-            if state == self._last_state and (now - self._last_time) < self.DEBOUNCE_SECONDS:
+            if (
+                state == self._last_state
+                and (now - self._last_time) < self.DEBOUNCE_SECONDS
+            ):
                 return False
             self._last_state = state
             self._last_time = now
@@ -94,8 +99,9 @@ class BTHelperDiscord2(Plugin):
         tempt = self._cpu_temp()
         uptim = self._uptime()
 
-
-        logging.info(f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}")
+        logging.info(
+            f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
+        )
         fields = [
             {"name": "Pwnagotchi", "value": pwnagotchi_name, "inline": True},
             {"name": "Device", "value": device, "inline": True},
@@ -141,12 +147,10 @@ class BTHelperDiscord2(Plugin):
             fields=fields,
         )
 
-
     def _notify(self, title, description, color=COLOR_CONNECTED, fields=None):
         """Send a Discord embed via webhook"""
         if not URLLIB_AVAILABLE or not self.discord_webhook_url:
             return
-
 
         embed = {
             "title": title,
@@ -223,30 +227,30 @@ class BTHelperDiscord2(Plugin):
         return f"{int(pwnagotchi.cpu_load() * 100)}%"
 
     def _uptime(self):
-        with open('/proc/uptime', 'r') as f:
+        with open("/proc/uptime", "r") as f:
             uptime_seconds = float(f.readline().split()[0])
             hours = int(uptime_seconds // 3600)
             minutes = int((uptime_seconds % 3600) // 60)
             return f"{hours}h {minutes}m"
-        
+
     def _cpu_stat(self):
         """
         Returns the split first line of the /proc/stat file
         """
-        with open('/proc/stat', 'rt') as fp:
-            return list(map(int,fp.readline().split()[1:]))
+        with open("/proc/stat", "rt") as fp:
+            return list(map(int, fp.readline().split()[1:]))
 
     def _cpu_temp(self):
 
-        scal = self.options.get('scale', 'celsius') # optional change
+        scal = self.options.get("scale", "celsius")  # optional change
 
         if scal == "fahrenheit":
-            temp = (pwnagotchi.temperature(celsius=False))
+            temp = pwnagotchi.temperature(celsius=False)
             symbol = "F"
         elif scal == "kelvin":
             temp = pwnagotchi.temperature() + 273.15
             symbol = "K"
         else:
             temp = pwnagotchi.temperature()
-            symbol = "C" # default to celsius
+            symbol = "C"  # default to celsius
         return f"{temp}{symbol}"
