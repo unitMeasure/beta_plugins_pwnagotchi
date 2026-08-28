@@ -34,7 +34,7 @@ class BTHelperDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.5.2"
+    __version__ = "1.0.5.3"
     __license__ = "GPL3"
     __description__ = (
         "Sends discord notifications when bt-tether connects. It also sends statistics!"
@@ -90,6 +90,7 @@ class BTHelperDiscord2(Plugin):
         ipv6 = event_data.get("ipv6")
         device = event_data.get("device", "unknown")
         pwnagotchi_name = event_data.get("pwnagotchi_name") or pwnagotchi.name()
+
         if not self._should_notify("connected"):
             return
 
@@ -98,47 +99,44 @@ class BTHelperDiscord2(Plugin):
         stat = str(self._cpu_stat())
         tempt = self._cpu_temp()
         uptim = self._uptime()
+        load_avg = self._load_average()
+
+        system_stats = (
+        f"**Memory:** {mem}\n"
+        f"**CPU Load:** {load}\n"
+        f"**AVG Load:** {load_avg}\n"
+        f"**CPU Stat:** {stat}\n"
+        f"**Uptime:** {uptim}\n"
+        f"**Temp:** {tempt}"
+        )
+
+        # Group connection info
+        connection_info = (
+            f"**IP:** `{ip}`\n"
+            f"**Device:** {device}"
+        )
+        # Group links
+        links = (
+            f"[Web UI](http://{ip}:8080/)\n"
+            f"[Plugins](http://{ip}:8080/plugins/)\n"
+            f"[Logtail](http://{ip}:8080/plugins/logtail)\n"
+            f"[Web2SSH2](http://{ip}:8083/)"
+        )
 
         logging.info(
             f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
+        
         fields = [
             {"name": "Pwnagotchi", "value": pwnagotchi_name, "inline": True},
-            {"name": "Device", "value": device, "inline": True},
-            {"name": "IP Address", "value": f"`{ip}`", "inline": True},
-            {"name": "MemUsage", "value": mem, "inline": True},
-            {"name": "Load", "value": load, "inline": True},
-            {"name": "Stat", "value": stat, "inline": True},
-            {"name": "Temp", "value": tempt, "inline": True},
-            {"name": "Uptime", "value": uptim, "inline": True},
-            {
-                "name": "Web Interface",
-                "value": f"http://{ip}:8080/",
-                "inline": False,
-            },
-            {
-                "name": "Plugins",
-                "value": f"http://{ip}:8080/plugins/",
-                "inline": False,
-            },
-            {
-                "name": "logtail",
-                "value": f"http://{ip}:8080/plugins/logtail",
-                "inline": False,
-            },
-            {
-                "name": "web2ssh2",
-                "value": f"http://{ip}:8083/",
-                "inline": False,
-            },
+            {"name": "Connection", "value": connection_info, "inline": False},
+            {"name": "Links", "value": links, "inline": False},
+            {"name": "System", "value": system_stats, "inline": False},
+
         ]
 
         if ipv6:
             fields.append({"name": "IPv6", "value": f"`{ipv6}`", "inline": True})
-
-        fields.append(
-            {"name": "Web Interface", "value": f"http://{ip}:8080/", "inline": False}
-        )
 
         self._send_async(
             title="🔷 Bluetooth Tethering Connected",
@@ -240,6 +238,11 @@ class BTHelperDiscord2(Plugin):
         with open("/proc/stat", "rt") as fp:
             return list(map(int, fp.readline().split()[1:]))
 
+    def _load_average(self):
+        with open('/proc/loadavg', 'r') as f:
+            parts = f.read().split()
+            return f"1m: {parts[0]}, 5m: {parts[1]}, 15m: {parts[2]}"
+            
     def _cpu_temp(self):
 
         scal = self.options.get("scale", "celsius")  # optional change
