@@ -186,7 +186,7 @@ TEMPLATE = """
 class sorted_pwn_beta(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com'
     __editor__ = 'avipars'
-    __version__ = '0.0.2'
+    __version__ = '0.0.3'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -200,7 +200,7 @@ class sorted_pwn_beta(plugins.Plugin):
         self.config = config
         self.ready = True
 
-    def decode_hex_field(value):
+    def decode_hex_field(self, value):
         """Decode hashcat/potfile $HEX[...] encoded fields to a UTF-8 string.
         Falls back to the original value if decoding fails."""
         if isinstance(value, str) and value.startswith("$HEX[") and value.endswith("]"):
@@ -238,8 +238,8 @@ class sorted_pwn_beta(plugins.Plugin):
                                 continue
 
                             # to deal with both pwncrack and wpa-sec format
-                            ssid = decode_hex_field(fields[-2].strip())      # 2nd to last
-                            password = decode_hex_field(fields[-1].strip()) # last one
+                            ssid = self.decode_hex_field(fields[-2].strip())      # 2nd to last
+                            password = self.decode_hex_field(fields[-1].strip()) # last one
                             other_fields = fields[:-2]   # everything before ssid/password (bssid, client)
 
                             key = (ssid, password)
