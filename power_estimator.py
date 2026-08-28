@@ -74,21 +74,22 @@ TEMPLATE = """
     {% endif %}
 
     <form class="pb-form" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label for="capacity_mah">Powerbank capacity (mAh)</label>
         <input type="number" step="1" min="1" name="capacity_mah" id="capacity_mah"
-               value="{{ data.get('capacity_mah', '') }}" required>
+               value="{{ data.get('capacity_mah', '5000') }}" required>
 
         <label for="percent">Current charge (%)</label>
         <input type="number" step="0.1" min="0" max="100" name="percent" id="percent"
-               value="{{ data.get('percent', '') }}" required>
+               value="{{ data.get('percent', '60') }}" required>
 
         <label for="voltage">Voltage (V)</label>
         <input type="number" step="0.01" min="0.1" name="voltage" id="voltage"
-               value="{{ data.get('voltage', '') }}" required>
+               value="{{ data.get('voltage', '5') }}" required>
 
         <label for="power_draw">Estimated average load (W)</label>
         <input type="number" step="0.01" min="0.01" name="power_draw" id="power_draw"
-               value="{{ data.get('power_draw_w', 1.0) }}" required>
+               value="{{ data.get('power_draw_w', 2.9) }}" required>
 
         <button type="submit">Save</button>
     </form>
@@ -110,7 +111,7 @@ TEMPLATE = """
 
 class power_estimator(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.5'
+    __version__ = '0.0.6'
     __license__ = 'GPL3'
     __description__ = 'Estimate remaining powerbank runtime from capacity, charge %, voltage and load'
 
