@@ -10,7 +10,7 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.2.2"
+    __version__ = "0.0.2.3"
     __license__ = "GPL3"
     __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
@@ -47,8 +47,8 @@ class probeReq(plugins.Plugin):
             if "pos_y" in self.options:
                 self.pos_y = int(self.options.get("pos_y", 75))
 
-            font_height = self.options.get('font_size', int(ui._height/60))
-            confont = ImageFont.truetype(fonts.FONT_NAME, size=font_height)
+            # font_height = self.options.get('font_size', int(ui._height/60))
+            # confont = ImageFont.truetype(fonts.FONT_NAME, size=font_height)
 
             logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
             # label_spacing=3
@@ -64,7 +64,7 @@ class probeReq(plugins.Plugin):
             #         label_spacing=label_spacing
             #     )
             # )
-            ui.add_element("pr_status", Text(color=BLACK, value="---", position=(self.pos_x, self.pos_y), font=fonts.Small))
+            ui.add_element("pr_status", LabeledValue(color=BLACK, value="---", position=(self.pos_x, self.pos_y), label_font=fonts.Small, text_font=fonts.Small))
         except Exception as e:
             logging.debug(f"[{self.__class__.__name__}]: Error on_ui_setup: {e}")
 
