@@ -183,9 +183,10 @@ TEMPLATE = """
 {% endblock %}
 """
 
-class sorted_pwn(plugins.Plugin):
-    __author__ = '37124354+dbukovac@users.noreply.github.com edited by avipars'
-    __version__ = '0.0.2.6'
+class sorted_pwn_beta(plugins.Plugin):
+    __author__ = '37124354+dbukovac@users.noreply.github.com'
+    __editor__ = 'avipars'
+    __version__ = '0.0.1'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -193,11 +194,23 @@ class sorted_pwn(plugins.Plugin):
         self.ready = False
 
     def on_loaded(self):
-        logging.info("[sorted_pwn] plugin loaded")
+        logging.info("[sorted_pwn_beta] plugin loaded")
 
     def on_config_changed(self, config):
         self.config = config
         self.ready = True
+
+    def _decode_hex_field(value):
+        """Decode hashcat/potfile $HEX[...] encoded fields to a UTF-8 string.
+        Falls back to the original value if decoding fails."""
+        if isinstance(value, str) and value.startswith("$HEX[") and value.endswith("]"):
+            hex_str = value[5:-1]
+            try:
+                return bytes.fromhex(hex_str).decode("utf-8", errors="replace")
+            except ValueError:
+                # Not valid hex , leave as-is
+                return value
+        return value
 
     def on_webhook(self, path, request):
         if not self.ready:
@@ -214,7 +227,7 @@ class sorted_pwn(plugins.Plugin):
 
                 unique_entries = {}
                 for pf_path in potfile_paths:
-                    logging.info("[sorted_pwn] trying to open %s" % pf_path)
+                    logging.info("[sorted_pwn_beta] trying to open %s" % pf_path)
                     with open(pf_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line in f:
                             line = line.strip()
@@ -225,8 +238,8 @@ class sorted_pwn(plugins.Plugin):
                                 continue
 
                             # to deal with both pwncrack and wpa-sec format
-                            ssid = fields[-2].strip() # 2nd to last
-                            password = fields[-1].strip() # last one
+                            ssid = decode_hex_field(fields[-2].strip())      # 2nd to last
+                            password = decode_hex_field(fields[-1].strip()) # last one
                             other_fields = fields[:-2]   # everything before ssid/password (bssid, client)
 
                             key = (ssid, password)
@@ -288,7 +301,7 @@ class sorted_pwn(plugins.Plugin):
 
               
             except Exception as e:
-                logging.error("[sorted_pwn] error while loading potfiles: %s" % e)
+                logging.error("[sorted_pwn_beta] error while loading potfiles: %s" % e)
                 logging.debug(e, exc_info=True)
 
                 abort(500)
