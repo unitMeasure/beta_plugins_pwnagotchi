@@ -1,165 +1,240 @@
-"""
-Power Bank Estimator Plugin for Pwnagotchi
-...
-"""
-
 import logging
 import os
-import time
-import pwnagotchi
+import json
+
 import pwnagotchi.plugins as plugins
-from pwnagotchi.ui.components import LabeledValue
-from pwnagotchi.ui.view import BLACK
-import pwnagotchi.ui.fonts as fonts
+
+from flask import abort, render_template_string
 
 
-class PowerEstimator(plugins.Plugin):
-    __author__ = "avipars"
-    __editor__ = "avipars"
-    __version__ = "0.0.1.1"
-    __license__ = "GPL3"
-    __description__ = "Web UI to estimate remaining power bank life"
+TEMPLATE = """
+{% extends "base.html" %}
+{% set active_page = "powerbankStatus" %}
+
+{% block title %}
+    {{ title }}
+{% endblock %}
+
+{% block meta %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=0" />
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+    <style>
+        .pb-form label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+        }
+        .pb-form input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            font-size: 1em;
+            margin-top: 4px;
+        }
+        .pb-form button {
+            margin-top: 16px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+        .pb-message {
+            margin-top: 12px;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .pb-message.ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .pb-message.err {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .pb-estimate {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eee;
+            border: 1px solid black;
+        }
+        .pb-estimate table {
+            width: 100%;
+        }
+        .pb-estimate td {
+            padding: 6px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {% if message %}
+        <div class="pb-message {{ 'ok' if message == 'Saved!' else 'err' }}">{{ message }}</div>
+    {% endif %}
+
+    <form class="pb-form" method="POST" action="">
+        <label for="capacity_mah">Powerbank capacity (mAh)</label>
+        <input type="number" step="1" min="1" name="capacity_mah" id="capacity_mah"
+               value="{{ data.get('capacity_mah', '') }}" required>
+
+        <label for="percent">Current charge (%)</label>
+        <input type="number" step="0.1" min="0" max="100" name="percent" id="percent"
+               value="{{ data.get('percent', '') }}" required>
+
+        <label for="voltage">Voltage (V)</label>
+        <input type="number" step="0.01" min="0.1" name="voltage" id="voltage"
+               value="{{ data.get('voltage', '') }}" required>
+
+        <label for="power_draw">Estimated average load (W)</label>
+        <input type="number" step="0.01" min="0.01" name="power_draw" id="power_draw"
+               value="{{ data.get('power_draw_w', 1.0) }}" required>
+
+        <button type="submit">Save</button>
+    </form>
+
+    {% if estimate %}
+        <div class="pb-estimate">
+            <table>
+                <tr><td>Remaining capacity:</td><td>{{ estimate.remaining_mah }} mAh</td></tr>
+                <tr><td>Remaining energy:</td><td>{{ estimate.remaining_wh }} Wh</td></tr>
+                <tr><td>Estimated runtime:</td>
+                    <td>{{ estimate.days }}d {{ estimate.hours }}h {{ estimate.minutes }}m
+                        ({{ estimate.hours_remaining }} h total)</td></tr>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}
+"""
+
+
+class power_estimator(plugins.Plugin):
+    __author__ = 'avipars'
+    __version__ = '0.0.5'
+    __license__ = 'GPL3'
+    __description__ = 'Estimate remaining powerbank runtime from capacity, charge %, voltage and load'
+
+    def __init__(self):
+        self.ready = False
+        self.options = {}
+        self.data_path = '/root/power_estimator.json'
 
     def on_loaded(self):
-        logging.info("[power-estimator] Plugin loaded")
+        logging.info("[power_estimator] plugin loaded")
+
+    def on_config_changed(self, config):
+        self.config = config
+        # optional: [main.plugins.power_estimator] path = "/root/power_estimator.json"
+        self.options = config.get('main', {}).get('plugins', {}).get('power_estimator', {}) or {}
+        self.data_path = self.options.get('path', '/root/power_estimator.json')
+        self.ready = True
+
+    def _load_data(self):
+        """Return the last-saved values as a dict, or {} if none/corrupt."""
+        try:
+            if os.path.isfile(self.data_path):
+                with open(self.data_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except (OSError, ValueError) as e:
+            logging.warning("[power_estimator] could not read %s: %s" % (self.data_path, e))
+        return {}
+
+    def _save_data(self, data):
+        try:
+            os.makedirs(os.path.dirname(self.data_path) or '.', exist_ok=True)
+            with open(self.data_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f)
+        except OSError as e:
+            logging.error("[power_estimator] could not write %s: %s" % (self.data_path, e))
+            raise
+
+    @staticmethod
+    def _estimate(data):
+        """
+        Estimate remaining runtime.
+
+        Voltage + mAh gives remaining energy in Wh:
+            Wh_remaining = (capacity_mah / 1000) * (percent / 100) * voltage
+        Dividing by an assumed average load in Watts gives hours remaining.
+        There's no way to derive load from mAh/%/V alone, so 'power_draw_w'
+        is a user-editable assumption (default 1.0 W, roughly a Pi Zero W
+        class device running pwnagotchi) rather than a measured value.
+        """
+        try:
+            capacity = float(data['capacity_mah'])
+            percent = float(data['percent'])
+            voltage = float(data['voltage'])
+            power_draw = float(data.get('power_draw_w', 1.0))
+            if capacity <= 0 or voltage <= 0 or power_draw <= 0:
+                return None
+
+            remaining_mah = capacity * (percent / 100.0)
+            remaining_wh = (remaining_mah / 1000.0) * voltage
+            hours_remaining = remaining_wh / power_draw
+
+            total_minutes = int(round(hours_remaining * 60))
+            days, rem_minutes = divmod(total_minutes, 24 * 60)
+            hours, minutes = divmod(rem_minutes, 60)
+
+            return {
+                'remaining_mah': round(remaining_mah, 1),
+                'remaining_wh': round(remaining_wh, 2),
+                'hours_remaining': round(hours_remaining, 2),
+                'days': days,
+                'hours': hours,
+                'minutes': minutes,
+            }
+        except (KeyError, ValueError, TypeError, ZeroDivisionError):
+            return None
 
     def on_webhook(self, path, request):
-        if path != "power-estimator":
-            return ""          # <-- critical fix
+        if not self.ready:
+            return "Plugin not ready"
 
-        # Get uptime in seconds
+        if path != "/" and path:
+            abort(404)
+
         try:
-            with open('/proc/uptime', 'r') as f:
-                uptime_seconds = float(f.readline().split()[0])
-        except:
-            uptime_seconds = 0.0
-        uptime_hours = uptime_seconds / 3600.0
+            data = self._load_data()
+            message = None
 
-        percentage = None
-        capacity = None
-        remaining_str = ""
+            if request.method == "POST":
+                try:
+                    capacity = float(request.form.get("capacity_mah", "").strip())
+                    percent = float(request.form.get("percent", "").strip())
+                    voltage = float(request.form.get("voltage", "").strip())
+                    power_draw = float(request.form.get("power_draw", "").strip())
 
-        if request.method == "POST":
-            try:
-                # Use get() to avoid KeyError if form fields are missing
-                percentage = float(request.form.get('percentage', 0))
-                capacity = float(request.form.get('capacity', 0))
-                if percentage < 0 or percentage > 100:
-                    raise ValueError
-                if capacity <= 0:
-                    raise ValueError
+                    if not (0 <= percent <= 100):
+                        raise ValueError("charge %% must be between 0 and 100")
+                    if capacity <= 0:
+                        raise ValueError("capacity must be positive")
+                    if voltage <= 0:
+                        raise ValueError("voltage must be positive")
+                    if power_draw <= 0:
+                        raise ValueError("load must be positive")
 
-                if percentage < 100:
-                    remaining_hours = uptime_hours * percentage / (100 - percentage)
-                else:
-                    remaining_hours = float('inf')
+                    data = {
+                        "capacity_mah": capacity,
+                        "percent": percent,
+                        "voltage": voltage,
+                        "power_draw_w": power_draw,
+                    }
+                    self._save_data(data)
+                    message = "Saved!"
+                except (ValueError, AttributeError) as ve:
+                    message = "Error: %s" % ve
 
-                if remaining_hours == float('inf'):
-                    remaining_str = "∞ (battery still at 100%)"
-                else:
-                    days = int(remaining_hours // 24)
-                    hours = int(remaining_hours % 24)
-                    minutes = int((remaining_hours * 60) % 60)
-                    if days > 0:
-                        remaining_str = f"{days}d {hours}h {minutes}m"
-                    elif hours > 0:
-                        remaining_str = f"{hours}h {minutes}m"
-                    else:
-                        remaining_str = f"{minutes}m"
+            estimate = self._estimate(data) if data else None
 
-                logging.info(
-                    f"[power-estimator] Percentage={percentage}%, Capacity={capacity}mAh, "
-                    f"Remaining={remaining_str}, Uptime={uptime_hours:.2f}h"
-                )
-            except (ValueError, TypeError) as e:
-                remaining_str = "Invalid input"
-
-        # Build HTML (same as before)
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Power Bank Estimator</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    background: #1a1a2e;
-                    color: #fff;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    margin: 0;
-                }
-                .container {
-                    background: rgba(255,255,255,0.1);
-                    padding: 30px;
-                    border-radius: 15px;
-                    width: 90%;
-                    max-width: 400px;
-                }
-                h1 { text-align: center; margin-bottom: 20px; }
-                label { display: block; margin: 10px 0 5px; }
-                input {
-                    width: 100%;
-                    padding: 10px;
-                    border: none;
-                    border-radius: 5px;
-                    background: rgba(255,255,255,0.2);
-                    color: #fff;
-                    font-size: 16px;
-                }
-                button {
-                    width: 100%;
-                    padding: 12px;
-                    margin-top: 20px;
-                    background: #4CAF50;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    font-size: 16px;
-                    cursor: pointer;
-                }
-                button:hover { background: #45a049; }
-                .result {
-                    margin-top: 20px;
-                    padding: 15px;
-                    background: rgba(0,0,0,0.3);
-                    border-radius: 5px;
-                    text-align: center;
-                    font-size: 18px;
-                }
-                .uptime {
-                    text-align: center;
-                    margin-bottom: 15px;
-                    font-size: 14px;
-                    opacity: 0.8;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🔋 Power Bank Estimator</h1>
-                <div class="uptime">System uptime: {uptime:.2f} hours</div>
-                <form method="POST">
-                    <label for="percentage">Current Battery Percentage (%):</label>
-                    <input type="number" id="percentage" name="percentage" min="0" max="100" step="0.1" required value="{perc_val}">
-
-                    <label for="capacity">Power Bank Capacity (mAh):</label>
-                    <input type="number" id="capacity" name="capacity" min="1" step="any" required value="{cap_val}">
-
-                    <button type="submit">Estimate Remaining Time</button>
-                </form>
-                {result_html}
-            </div>
-        </body>
-        </html>
-        """.format(
-            uptime=round(uptime_hours, 2),
-            perc_val=percentage if percentage is not None else "",
-            cap_val=capacity if capacity is not None else "",
-            result_html=f'<div class="result">Remaining: {remaining_str}</div>' if remaining_str else ""
-        )
-
-        return html
+            return render_template_string(
+                TEMPLATE,
+                title="Powerbank Status",
+                data=data or {},
+                estimate=estimate,
+                message=message,
+            )
+        except Exception as e:
+            logging.error("[power_estimator] error: %s" % e)
+            logging.debug(e, exc_info=True)
+            abort(500)
