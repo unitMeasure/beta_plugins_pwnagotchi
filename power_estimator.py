@@ -1,13 +1,6 @@
 """
 Power Bank Estimator Plugin for Pwnagotchi
-
-Adds a web interface at /plugins/power-estimator where you can enter
-the current power bank percentage and capacity (mAh). It uses the
-system uptime to estimate how much battery life remains, assuming
-the power bank was at 100% when the Pwnagotchi started.
-
-Configuration (config.toml):
-    main.plugins.power-estimator.enabled = true
+...
 """
 
 import logging
@@ -21,9 +14,9 @@ import pwnagotchi.ui.fonts as fonts
 
 
 class PowerEstimator(plugins.Plugin):
-    __author__ = "wsvdmeer"
+    __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.1"
+    __version__ = "0.0.1.1"
     __license__ = "GPL3"
     __description__ = "Web UI to estimate remaining power bank life"
 
@@ -32,21 +25,23 @@ class PowerEstimator(plugins.Plugin):
 
     def on_webhook(self, path, request):
         if path != "power-estimator":
-            return None
+            return ""          # <-- critical fix
 
         # Get uptime in seconds
-        with open('/proc/uptime', 'r') as f:
-            uptime_seconds = float(f.readline().split()[0])
+        try:
+            with open('/proc/uptime', 'r') as f:
+                uptime_seconds = float(f.readline().split()[0])
+        except:
+            uptime_seconds = 0.0
         uptime_hours = uptime_seconds / 3600.0
 
-        # Handle form submission
         percentage = None
         capacity = None
-        remaining_hours = None
         remaining_str = ""
 
         if request.method == "POST":
             try:
+                # Use get() to avoid KeyError if form fields are missing
                 percentage = float(request.form.get('percentage', 0))
                 capacity = float(request.form.get('capacity', 0))
                 if percentage < 0 or percentage > 100:
@@ -54,17 +49,14 @@ class PowerEstimator(plugins.Plugin):
                 if capacity <= 0:
                     raise ValueError
 
-                # Estimate remaining time (in hours)
-                # Formula: remaining = uptime * percentage / (100 - percentage)
                 if percentage < 100:
                     remaining_hours = uptime_hours * percentage / (100 - percentage)
                 else:
-                    remaining_hours = float('inf')  # Can't estimate if still 100%
+                    remaining_hours = float('inf')
 
                 if remaining_hours == float('inf'):
-                    remaining_str = "x (battery still at 100%)"
+                    remaining_str = "∞ (battery still at 100%)"
                 else:
-                    # Format nicely
                     days = int(remaining_hours // 24)
                     hours = int(remaining_hours % 24)
                     minutes = int((remaining_hours * 60) % 60)
@@ -75,17 +67,14 @@ class PowerEstimator(plugins.Plugin):
                     else:
                         remaining_str = f"{minutes}m"
 
-                # Also calculate used/remaining capacity
-                used_capacity = capacity * (1 - percentage / 100)
-                remaining_capacity = capacity * percentage / 100
                 logging.info(
                     f"[power-estimator] Percentage={percentage}%, Capacity={capacity}mAh, "
                     f"Remaining={remaining_str}, Uptime={uptime_hours:.2f}h"
                 )
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as e:
                 remaining_str = "Invalid input"
 
-        # Build HTML
+        # Build HTML (same as before)
         html = """
         <!DOCTYPE html>
         <html>
