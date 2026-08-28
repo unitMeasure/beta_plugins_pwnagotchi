@@ -7,9 +7,9 @@ from functools import wraps
 class web2ssh2(plugins.Plugin):
     __author__ = 'WPA2'
     __editor__ = 'avipars'
-    __version__ = '0.1.3.3'
+    __version__ = '0.1.3.4'
     __license__ = 'GPL3'
-    __description__ = 'A Plugin to issue SSH commands via a browser'
+    __description__ = 'A Plugin to issue SSH commands via a browser with some added presets'
     __gitHub__ = "https://github.com/wpa-2/Pwnagotchi-Plugins/blob/main/web2ssh.py"
 
     def __init__(self):
@@ -35,10 +35,10 @@ class web2ssh2(plugins.Plugin):
         self._register_routes()
         self.app.run(host='::', port=self.options["port"])
 
-    def on_webhook(self, path, request):
+    def on_webhook(self, path, requestobj):
         # open the url to redirect to webpage
         """Handle webhook requests by redirecting to the web2ssh interface."""
-        return redirect(f"http://{request.host.split(':')[0]}:{self.port}/", code=302)
+        return redirect(f"http://{requestobj.host.split(':')[0]}:{self.port}/", code=302)
 
     def _register_routes(self):
         """Register Flask routes."""
@@ -156,7 +156,11 @@ class web2ssh2(plugins.Plugin):
                             </form>
                             <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="ls /usr/local/share/pwnagotchi/custom-plugins">
-                                <button type="submit">List Plugins</button>
+                                <button type="submit">List Custom Plugins Old</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="ls /etc/pwnagotchi/custom-plugins">
+                                <button type="submit">List Custom Plugins New</button>
                             </form>
                             <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="sudo pwnagotchi plugins update">
@@ -170,20 +174,37 @@ class web2ssh2(plugins.Plugin):
                                 <input type="hidden" name="command" value="systemctl status pwnagotchi --no-pager">
                                 <button type="submit">Status</button>
                             </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="dmesg | tail -50">
+                                <button type="submit">dmesg</button>
                             </form>
-                                <form action="/execute" method="post" style="display: inline;">
+                            <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="ethtool -i wlan0mon">
                                 <button type="submit">ethtool</button>
                             </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="if ip link show wlan0mon >/dev/null 2>&1; then ethtool -i wlan0mon; elif ip link show wlan0 >/dev/null 2>&1; then ethtool -i wlan0; else echo 'No wlan0mon or wlan0 interface found'; fi">
+                                <button type="submit">ethtool2</button>
                             </form>
-                                <form action="/execute" method="post" style="display: inline;">
+                            <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="cat /etc/pwnagotchi/config.toml">
                                 <button type="submit">View Config</button>
                             </form>
-                            </form>
-                                <form action="/execute" method="post" style="display: inline;">
+                            <form action="/execute" method="post" style="display: inline;">
                                 <input type="hidden" name="command" value="lsusb && iwconfig">
                                 <button type="submit">Check WiFi</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="ifconfig && iw dev">
+                                <button type="submit">wireless check </button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="sudo airmon-ng start wlan0">
+                                <button type="submit">Enable Monitor Mode</button>
+                            </form>
+                            <form action="/execute" method="post" style="display: inline;">
+                                <input type="hidden" name="command" value="sudo airmon-ng stop wlan0mon">
+                                <button type="submit">Disable Monitor Mode</button>
                             </form>
                         </div>
                     </div>
@@ -267,7 +288,7 @@ class web2ssh2(plugins.Plugin):
         """Enforce basic authentication."""
         auth = request.authorization
 
-        if not auth or not self.check_auth(auth.username,auth.password):
+        if not auth or not self.check_auth(auth.username, auth.password):
             return self._unauthorized_response()
 
         return None
