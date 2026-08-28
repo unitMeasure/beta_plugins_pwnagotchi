@@ -12,12 +12,12 @@ import pwnagotchi.plugins as plugins
 import pwnagotchi
 import logging
 
-
 class MemTempV2(plugins.Plugin):
-    __author__ = 'xenDE' # https://github.com/xenDE
-    __version__ = '0.0.2'
+    __author__ = 'xenDE'
+    __version__ = '0.0.3'
     __editor__ = 'avipars'
     __license__ = 'GPL3'
+    __github__ = 'https://github.com/xenDE'
     __description__ = 'A plugin that will display memory, cpu usage, load, and temperature, can show as many as you want'
 
     ALLOWED_FIELDS = {
@@ -40,6 +40,8 @@ class MemTempV2(plugins.Plugin):
     def on_loaded(self):
         self._last_cpu_load = self._cpu_stat()
         logging.info("[MemTempV2] plugin loaded.")
+
+        logging.info(f"[MemTempV2] swap {self.swap_percent()} load_avg {self.load_avg()}")
 
     def mem_usage(self):
         return f"{int(pwnagotchi.mem_usage() * 100)}%"
@@ -116,7 +118,6 @@ class MemTempV2(plugins.Plugin):
             self.fields = [x.strip() for x in self.fields if x.strip() in self.ALLOWED_FIELDS.keys()]
             # self.fields = self.fields[:3]  #  removed the 3 first field limit 
 
-            logging.info(f"[MemTempV2] swap {self.swap_percent()} load_avg {self.load_avg()}")
 
         except Exception:
             # Set default value
