@@ -109,11 +109,7 @@ TEMPLATE = """
             tr = table.getElementsByTagName("tr");
 
             for (i = 0; i < tr.length; i++) {
-                // Skip header rows if they exist and you don't want to filter them
-                // For example, if your header is in a <thead>, you could get rows from <tbody> instead
-                // Or check if tr[i].parentNode.tagName === 'THEAD' and continue
-
-                rowContainsFilter = false; // Flag to check if any td in the current row matches
+                rowContainsFilter = false;
                 tds = tr[i].getElementsByTagName("td");
 
                 for (j = 0; j < tds.length; j++) {
@@ -122,7 +118,7 @@ TEMPLATE = """
                         txtValue = currentTd.textContent || currentTd.innerText;
                         if (txtValue.toUpperCase().indexOf(filter) > -1) {
                             rowContainsFilter = true;
-                            break; // Found a match in this row, no need to check other tds
+                            break;
                         }
                     }
                 }
@@ -130,8 +126,6 @@ TEMPLATE = """
                 if (rowContainsFilter) {
                     tr[i].style.display = "";
                 } else {
-                    // Only hide if it's not a header row (th)
-                    // This check is basic, if you have th in tbody, you might need a more specific check
                     if (tr[i].getElementsByTagName("th").length === 0) {
                         tr[i].style.display = "none";
                     }
@@ -146,11 +140,17 @@ TEMPLATE = """
     <div style="margin-bottom:10px;">
     Sort:
     {% if order == "asc" %}
-        <strong>Ascending</strong> |
-        <a href="?order=desc">Descending</a>
+        <strong>A-Z</strong> |
+        <a href="?order=desc">Z-A</a> |
+        <a href="?order=recent">Most Recent</a>
+    {% elif order == "desc" %}
+        <a href="?order=asc">A-Z</a> |
+        <strong>Z-A</strong> |
+        <a href="?order=recent">Most Recent</a>
     {% else %}
-        <a href="?order=asc">Ascending</a> |
-        <strong>Descending</strong>
+        <a href="?order=asc">A-Z</a> |
+        <a href="?order=desc">Z-A</a> |
+        <strong>Most Recent</strong>
     {% endif %}
     |
     <a href="?order={{ order }}&export=1">Export Results</a>
@@ -159,20 +159,18 @@ TEMPLATE = """
         <tr>
             <th>SSID</th>
             <th>Password</th>
-            <th>Other</th>
+            <th>BSSID / Station</th>
         </tr>
         {% for p in passwords %}
             <tr>
                 <td data-label="SSID">{{p["ssid"]}}</td>
                 <td data-label="Password">{{p["password"]}}</td>
-                <td data-label="Other">
+                <td data-label="BSSID / Station">
                     {% set other = p.get("other_fields") %}
-                    {% if other %}
-                        {% if other is iterable and other is not string %}
-                            {{ other | join(", ") }}
-                        {% else %}
-                            {{ other }}
-                        {% endif %}
+                    {% if other and other|length >= 2 %}
+                        BSSID: {{ other[0] }}, STA: {{ other[1] }}
+                    {% elif other %}
+                        {{ other | join(", ") }}
                     {% else %}
                         <span>None</span>
                     {% endif %}
@@ -186,7 +184,7 @@ TEMPLATE = """
 class sorted_pwn_beta(plugins.Plugin):
     __author__ = '37124354+dbukovac@users.noreply.github.com'
     __editor__ = 'avipars'
-    __version__ = '0.0.3'
+    __version__ = '0.0.4.0'
     __license__ = 'GPL3'
     __description__ = 'List cracked passwords from any potfile found in the handshakes directory'
     __github__ = 'https://github.com/evilsocket/pwnagotchi-plugins-contrib/blob/df9758065bd672354b3fa2a3299f4a8d80c8fd6a/wpa-sec-list.py'
@@ -208,7 +206,6 @@ class sorted_pwn_beta(plugins.Plugin):
             try:
                 return bytes.fromhex(hex_str).decode("utf-8", errors="replace")
             except ValueError:
-                # Not valid hex , leave as-is
                 return value
         return value
 
@@ -219,13 +216,18 @@ class sorted_pwn_beta(plugins.Plugin):
         if path == "/" or not path:
             try:
                 order = request.args.get("order", "asc").lower()
-                reverse_sort = order == "desc"
                 export = request.args.get("export", "0") == "1"
-                show_other = request.args.get("show_other", "0") == "1" # TODO hide other fields in table if user wants
+                show_other = request.args.get("show_other", "0") == "1"  # TODO hide other fields in table if user wants
                 base_dir = self.config['bettercap']['handshakes']
                 potfile_paths = glob.glob(os.path.join(base_dir, "*.potfile"))
 
                 unique_entries = {}
+                # wpa-sec potfile export format is "BSSID:STATION:ESSID:PASSWORD",
+                # so other_fields (everything before ssid/password) is [BSSID, STATION].
+                # line_index is a running counter across all potfiles/lines in the order
+                # they're read, used to figure out which entries were seen most recently
+                # (later lines in a potfile == more recently cracked/appended).
+                line_index = 0
                 for pf_path in potfile_paths:
                     logging.info("[sorted_pwn_beta] trying to open %s" % pf_path)
                     with open(pf_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -237,24 +239,41 @@ class sorted_pwn_beta(plugins.Plugin):
                             if len(fields) < 2:
                                 continue
 
-                            # to deal with both pwncrack and wpa-sec format
+                            line_index += 1
+
                             ssid = self.decode_hex_field(fields[-2].strip())      # 2nd to last
                             password = self.decode_hex_field(fields[-1].strip()) # last one
-                            other_fields = fields[:-2]   # everything before ssid/password (bssid, client)
+                            other_fields = fields[:-2]   # [BSSID, STATION] for wpa-sec format
 
                             key = (ssid, password)
                             if key not in unique_entries:
                                 unique_entries[key] = {
                                     "ssid": ssid,
                                     "password": password,
-                                    "other_fields": other_fields,   # list of other fields usually bssid etc.
+                                    "other_fields": other_fields,
+                                    "first_seen": line_index,
+                                    "last_seen": line_index,
                                 }
-                            else: # keep additional occurrences if you want
-                                unique_entries[key].setdefault("duplicates", []).append({ 
-                                    "other_fields": other_fields   
+                            else:
+                                entry = unique_entries[key]
+                                entry["last_seen"] = line_index
+                                entry.setdefault("duplicates", []).append({
+                                    "other_fields": other_fields
                                 })
 
-                sorted_passwords = sorted(unique_entries.values(), key=lambda x: (x["ssid"].lower(), x["password"]), reverse=reverse_sort)  # Convert to sorted list
+                if order == "recent":
+                    sorted_passwords = sorted(
+                        unique_entries.values(),
+                        key=lambda x: x["last_seen"],
+                        reverse=True,
+                    )
+                else:
+                    reverse_sort = order == "desc"
+                    sorted_passwords = sorted(
+                        unique_entries.values(),
+                        key=lambda x: (x["ssid"].lower(), x["password"]),
+                        reverse=reverse_sort,
+                    )
 
                 html = render_template_string(
                     TEMPLATE,
@@ -268,7 +287,6 @@ class sorted_pwn_beta(plugins.Plugin):
                     lines.append("SSID\tPassword\tOther")
 
                     for p in sorted_passwords:
-
                         if show_other:
                             other = p.get("other_fields")
                             if isinstance(other, list):
@@ -282,7 +300,7 @@ class sorted_pwn_beta(plugins.Plugin):
                                 )
                             )
                         else:
-                                lines.append(
+                            lines.append(
                                 "%s:%s" % (
                                     p.get("ssid", ""),
                                     p.get("password", ""),
@@ -299,10 +317,7 @@ class sorted_pwn_beta(plugins.Plugin):
                     return response
                 return html
 
-              
             except Exception as e:
                 logging.error("[sorted_pwn_beta] error while loading potfiles: %s" % e)
                 logging.debug(e, exc_info=True)
-
                 abort(500)
-

@@ -14,7 +14,7 @@ import logging
 
 class MemTempV2(plugins.Plugin):
     __author__ = 'xenDE'
-    __version__ = '0.0.3'
+    __version__ = '0.0.3.1'
     __editor__ = 'avipars'
     __license__ = 'GPL3'
     __github__ = 'https://github.com/xenDE'
