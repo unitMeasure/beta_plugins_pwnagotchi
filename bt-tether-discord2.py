@@ -32,7 +32,7 @@ class BTTetherDiscord2(Plugin):
     __author__ = "wsvdmeer"
     __editor__ = "avipars"
     __github__ = "https://github.com/wsvdmeer/pwnagotchi-plugins/"
-    __version__ = "1.0.5"
+    __version__ = "1.0.5.1"
     __license__ = "GPL3"
     __description__ = "Sends Detailed Discord notifications when bt-tether connects"
 
@@ -52,47 +52,34 @@ class BTTetherDiscord2(Plugin):
         device = event_data.get("device", "unknown")
         pwnagotchi_name = pwnagotchi.name()
 
-        mem = self._mem_usage()
-        load = self._cpu_load()
-        stat = self._cpu_stat()
-        tempt = self._cpu_temp()
+        logging.info(f"[bt-tether-discord2] Connected: {pwnagotchi_name} - {ip} via {device}")
 
-        logging.info(
-            f"[bt-tether-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
+        system_stats = (f"**Memory:** {self._mem_usage()}\n"
+            f"**CPU Load:** {self._cpu_load()}\n"
+            f"**CPU Stat:** {self._cpu_stat()}\n"
+            f"**Temp:** {self._cpu_temp()}")
+
+        links = (f"[Web UI](http://{ip}:8080/)\n"
+            f"[Plugins](http://{ip}:8080/plugins/)\n"
+            f"[Logtail](http://{ip}:8080/plugins/logtail)\n"
+            f"[Web2SSH2](http://{ip}:8083/)")
+        
+        # Group connection info
+        connection_info = (
+            f"**IP:** `{ip}`\n"
+            f"**Device:** {device}"
         )
+
         self._notify(
             title="🔷 Bluetooth Tethering Connected",
             description=f"**{pwnagotchi_name}** is now connected on {ip}",
             color=3447003,  # Blue
             fields=[
                 {"name": "Pwnagotchi", "value": pwnagotchi_name, "inline": True},
-                {"name": "Device", "value": device, "inline": True},
-                {"name": "Memory Usage", "value": mem, "inline": True},
-                {"name": "CPU Load", "value": load, "inline": True},
-                {"name": "CPU Stat", "value": stat, "inline": True},
-                {"name": "Temperature", "value": tempt, "inline": True},
-                {"name": "IP Address", "value": f"`{ip}`", "inline": True},
-                {
-                    "name": "Web Interface",
-                    "value": f"http://{ip}:8080/",
-                    "inline": False,
-                },
-                {
-                    "name": "Plugins",
-                    "value": f"http://{ip}:8080/plugins/",
-                    "inline": False,
-                },
-                {
-                    "name": "logtail",
-                    "value": f"http://{ip}:8080/plugins/logtail",
-                    "inline": False,
-                },
-                {
-                    "name": "web2ssh2",
-                    "value": f"http://{ip}:8083/",
-                    "inline": False,
-                },
-            ],
+                {"name": "Connection", "value": connection_info, "inline": False},
+                {"name": "System", "value": system_stats, "inline": False},
+                {"name": "Links", "value": links, "inline": False},
+            ]
         )
 
     def _notify(self, title, description, color=3447003, fields=None):
