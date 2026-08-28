@@ -100,19 +100,21 @@ class BTHelperDiscord2(Plugin):
         tempt = self._cpu_temp()
         uptim = self._uptime()
         load_avg = self._load_average()
+        swap_per = self._swap_percent()
 
         system_stats = (
         f"**Memory:** {mem}\n"
-        f"**CPU Load:** {load}\n"
+        f"**CPU Load:** {load}\t"
         f"**AVG Load:** {load_avg}\n"
         f"**CPU Stat:** {stat}\n"
         f"**Uptime:** {uptim}\n"
-        f"**Temp:** {tempt}"
+        f"**Temp:** {tempt}\n"
+        f"**Swap:** {swap_per}"
         )
 
         # Group connection info
         connection_info = (
-            f"**IP:** `{ip}`\n"
+            f"**IP:** `{ip}`\t"
             f"**Device:** {device}"
         )
         # Group links
@@ -126,7 +128,7 @@ class BTHelperDiscord2(Plugin):
         logging.info(
             f"[bt-helper-discord2] Connected: {pwnagotchi_name} - {ip} via {device}"
         )
-        
+
         fields = [
             {"name": "Pwnagotchi", "value": pwnagotchi_name, "inline": True},
             {"name": "Connection", "value": connection_info, "inline": False},
@@ -257,3 +259,17 @@ class BTHelperDiscord2(Plugin):
             temp = pwnagotchi.temperature()
             symbol = "C"  # default to celsius
         return f"{temp}{symbol}"
+
+    def _swap_percent(self):
+        with open('/proc/meminfo') as f:
+            meminfo = {}
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 2:
+                    meminfo[parts[0].rstrip(':')] = int(parts[1])
+        total = meminfo.get('SwapTotal', 0)
+        free = meminfo.get('SwapFree', 0)
+        if total == 0:
+            return "0%"
+        used = total - free
+        return f"{int(used / total * 100)}%"
