@@ -1,10 +1,21 @@
 import logging
 import os
 import json
+import time
 
 import pwnagotchi.plugins as plugins
 
 from flask import abort, render_template_string
+
+try:
+    from pwnagotchi.ui.components import LabeledValue
+    from pwnagotchi.ui.view import BLACK
+    import pwnagotchi.ui.fonts as fonts
+except ImportError:
+    # keeps the plugin importable in a non-pwnagotchi test env
+    LabeledValue = None
+    BLACK = None
+    fonts = None
 
 
 TEMPLATE = """
@@ -111,7 +122,7 @@ TEMPLATE = """
 
 class power_estimator(plugins.Plugin):
     __author__ = 'avipars'
-    __version__ = '0.0.6'
+    __version__ = '0.0.7'
     __license__ = 'GPL3'
     __description__ = 'Estimate remaining powerbank runtime from capacity, charge %, voltage and load'
 
@@ -120,15 +131,47 @@ class power_estimator(plugins.Plugin):
         self.options = {}
         self.data_path = '/root/power_estimator.json'
 
+        # in-memory cache of the last known/estimated reading, so on_ui_update
+        # doesn't have to hit disk on every tick
+        self.current_data = {}
+
+        # decay bookkeeping
+        self._decay_interval_s = 300  # how often we re-estimate, in seconds
+        self._last_decay_check = 0.0  # monotonic clock, throttles on_ui_update work
+
+        # ui bookkeeping
+        self._ui_enabled = True
+        self._ui_added = False
+
     def on_loaded(self):
         logging.info("[power_estimator] plugin loaded")
 
     def on_config_changed(self, config):
         self.config = config
-        # optional: [main.plugins.power_estimator] path = "/root/power_estimator.json"
+        # optional:
+        # [main.plugins.power_estimator]
+        # path = "/root/power_estimator.json"
+        # ui = true
+        # ui_x = 130
+        # ui_y = 80
+        # interval_minutes = 5
         self.options = config.get('main', {}).get('plugins', {}).get('power_estimator', {}) or {}
         self.data_path = self.options.get('path', '/root/power_estimator.json')
+        self._ui_enabled = bool(self.options.get('ui', True))
+
+        try:
+            interval_minutes = float(self.options.get('interval_minutes', 5))
+        except (TypeError, ValueError):
+            interval_minutes = 5
+        self._decay_interval_s = max(30.0, interval_minutes * 60.0)
+
+        # prime the in-memory cache from disk so the ui has something to show
+        # as soon as it's set up, without waiting for the first decay tick
+        self.current_data = self._load_data()
+
         self.ready = True
+
+    # ---------------------------------------------------------------- data
 
     def _load_data(self):
         """Return the last-saved values as a dict, or {} if none/corrupt."""
@@ -188,6 +231,118 @@ class power_estimator(plugins.Plugin):
         except (KeyError, ValueError, TypeError, ZeroDivisionError):
             return None
 
+    @staticmethod
+    def _decay_percent(data, elapsed_hours):
+        """
+        Given elapsed time since the last known reading, estimate how much
+        charge % has been used up, assuming a constant power_draw_w load.
+
+        current_A = power_draw_w / voltage
+        mAh_used  = current_A * elapsed_hours * 1000
+        pct_used  = mAh_used / capacity_mah * 100
+
+        Returns the new (clamped) percent, or None if the stored reading
+        doesn't have enough info to extrapolate from (e.g. never saved yet).
+        """
+        try:
+            capacity = float(data['capacity_mah'])
+            percent = float(data['percent'])
+            voltage = float(data['voltage'])
+            power_draw = float(data.get('power_draw_w', 1.0))
+            if capacity <= 0 or voltage <= 0 or power_draw <= 0 or elapsed_hours <= 0:
+                return percent
+
+            current_a = power_draw / voltage
+            mah_used = current_a * elapsed_hours * 1000.0
+            pct_used = (mah_used / capacity) * 100.0
+
+            return max(0.0, min(100.0, percent - pct_used))
+        except (KeyError, ValueError, TypeError, ZeroDivisionError):
+            return None
+
+    def _apply_decay_if_due(self, now_monotonic):
+        """
+        Throttled (every _decay_interval_s) re-estimate of the current
+        percentage, based on wall-clock time elapsed since the reading was
+        last saved/estimated (a stand-in for "uptime" - time the powerbank
+        has actually been draining). Updates self.current_data and persists
+        it. Safe to call often; it no-ops between intervals.
+        """
+        if now_monotonic - self._last_decay_check < self._decay_interval_s:
+            return
+        self._last_decay_check = now_monotonic
+
+        data = self.current_data or self._load_data()
+        if not data or 'percent' not in data:
+            return  # nothing saved yet, nothing to extrapolate from
+
+        now_wall = time.time()
+        last_update = data.get('last_update', now_wall)
+        elapsed_hours = max(0.0, (now_wall - last_update) / 3600.0)
+        if elapsed_hours <= 0:
+            return
+
+        new_percent = self._decay_percent(data, elapsed_hours)
+        if new_percent is None:
+            return
+
+        data = dict(data)
+        data['percent'] = round(new_percent, 2)
+        data['last_update'] = now_wall
+
+        try:
+            self._save_data(data)
+            self.current_data = data
+        except OSError:
+            # keep the in-memory estimate even if the disk write failed
+            self.current_data = data
+
+    # ------------------------------------------------------------------ ui
+
+    def on_ui_setup(self, ui):
+        if not self._ui_enabled or LabeledValue is None:
+            return
+        try:
+            x = int(self.options.get('ui_x', 130))
+            y = int(self.options.get('ui_y', 80))
+            ui.add_element('pb', LabeledValue(
+                color=BLACK,
+                label='PB',
+                value='-',
+                position=(x, y),
+                label_font=fonts.Small,
+                text_font=fonts.Small,
+            ))
+            self._ui_added = True
+        except Exception as e:
+            logging.warning("[power_estimator] could not add ui element: %s" % e)
+
+    def on_ui_update(self, ui):
+        if not self.ready:
+            return
+
+        # cheap, throttled re-estimate (only touches disk every interval)
+        self._apply_decay_if_due(time.monotonic())
+
+        if not self._ui_enabled or not self._ui_added:
+            return
+
+        percent = (self.current_data or {}).get('percent')
+        try:
+            ui.set('pb', "%.0f%%" % float(percent) if percent is not None else '-')
+        except (TypeError, ValueError):
+            ui.set('pb', '-')
+
+    def on_unload(self, ui):
+        if self._ui_added:
+            try:
+                with ui._lock:
+                    ui.remove_element('pb')
+            except Exception:
+                pass
+
+    # -------------------------------------------------------------- webhook
+
     def on_webhook(self, path, request):
         if not self.ready:
             return "Plugin not ready"
@@ -196,7 +351,7 @@ class power_estimator(plugins.Plugin):
             abort(404)
 
         try:
-            data = self._load_data()
+            data = self.current_data or self._load_data()
             message = None
 
             if request.method == "POST":
@@ -220,8 +375,10 @@ class power_estimator(plugins.Plugin):
                         "percent": percent,
                         "voltage": voltage,
                         "power_draw_w": power_draw,
+                        "last_update": time.time(),
                     }
                     self._save_data(data)
+                    self.current_data = data
                     message = "Saved!"
                 except (ValueError, AttributeError) as ve:
                     message = "Error: %s" % ve
@@ -239,3 +396,4 @@ class power_estimator(plugins.Plugin):
             logging.error("[power_estimator] error: %s" % e)
             logging.debug(e, exc_info=True)
             abort(500)
+            
