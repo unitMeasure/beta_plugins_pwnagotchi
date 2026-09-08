@@ -16,9 +16,9 @@ class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
     __author__ = "avipars"
     __editor__ = "avipars"
-    __version__ = "0.0.2.5"
+    __version__ = "0.0.5"
     __license__ = "GPL3"
-    __description__ = "Listens for Wi-Fi probe requests, displays them on screen and logs them."
+    __description__ = "BETA Listens for Wi-Fi probe requests, displays them on screen and logs them."
     __name__ = "probeReq"
     __defaults__ = {
         "enabled": False,
