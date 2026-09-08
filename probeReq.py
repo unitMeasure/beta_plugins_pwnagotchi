@@ -1,16 +1,32 @@
 import logging
 from PIL import ImageFont
-
 import pwnagotchi.plugins as plugins
 from pwnagotchi.ui.components import Text
 from pwnagotchi.ui.view import BLACK
 from pwnagotchi.bettercap import Client
 
-# Load a font directly instead of using fonts.Small, so you control the
-# exact pixel size rather than whatever pwnagotchi's presets give you.
-_TINY_FONT = ImageFont.truetype(
-    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 8
-)
+def load_font():
+    """Load the smallest suitable font, with fallbacks."""
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+    ]
+
+    for path in font_paths:
+        try:
+            font = ImageFont.truetype(path, 8)
+            logging.info("[probeReq] Using font: %s", path)
+            return font
+        except (OSError, IOError) as e:
+            logging.debug("[probeReq] Could not load font %s: %s", path, e)
+
+    # Final fallback to Pwnagotchi's built-in font
+    logging.warning("[probeReq] No system font found, using pwnagotchi fonts.Small")
+    return fonts.Small
+
+
+_TINY_FONT = load_font() # Load a font directly instead of using fonts.Small, to control  exact pixel size
 
 class probeReq(plugins.Plugin):
     __GitHub__ = "https://github.com/unitMeasure/pwn-plugins/"
@@ -32,7 +48,7 @@ class probeReq(plugins.Plugin):
         self.running = True
         self.pr_status = "Waiting"
         self.pos_x = 0
-        self.pos_y = 63
+        self.pos_y = 70
         self.show_verbose = False
         self.log_results = False
         
@@ -49,25 +65,10 @@ class probeReq(plugins.Plugin):
             if "pos_x" in self.options:
                 self.pos_x = int(self.options.get("pos_x", 0))
             if "pos_y" in self.options:
-                self.pos_y = int(self.options.get("pos_y", 63))
-
-            # font_height = self.options.get('font_size', int(ui._height/60))
-            # confont = ImageFont.truetype(fonts.FONT_NAME, size=font_height)
+                self.pos_y = int(self.options.get("pos_y", 70))
 
             logging.info(f"[{self.__class__.__name__}] pos_x {self.pos_x} pos_y {self.pos_y}")
-            # label_spacing=3
-            # ui.add_element(
-            #     "pr_status",
-            #     LabeledValue(
-            #         color=BLACK,
-            #         label="",
-            #         value=f"[{self.__class__.__name__}]: Active",
-            #         position=(self.pos_x, self.pos_y),
-            #         label_font=fonts.Small,
-            #         text_font=fonts.Small,
-            #         label_spacing=label_spacing
-            #     )
-            # )
+  
           
             ui.add_element(
                 "pr_status",
