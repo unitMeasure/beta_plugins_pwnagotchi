@@ -98,55 +98,55 @@ TEMPLATE = """
             }
         }
 
-           @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #e0e0e0;
-            }
+        @media (prefers-color-scheme: dark) {
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
 
-            #searchText {
-                background-color: #1e1e1e;
-                color: #e0e0e0;
-                border: 1px solid #444;
-            }
+        #searchText {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #444;
+        }
 
-            table, th, td {
-                border: 1px solid #444;
-            }
+        table, th, td {
+            border: 1px solid #444;
+        }
 
-            table th {
-                background-color: #000;
-                color: #e0e0e0;
-            }
+        table th {
+            background-color: #000;
+            color: #e0e0e0;
+        }
 
-            table tr:nth-child(even) {
+        table tr:nth-child(even) {
+            background-color: #1a1a1a;
+        }
+
+        table tr:nth-child(odd) {
+            background-color: #121212;
+        }
+
+        a {
+            color: #8ab4f8;
+        }
+
+        strong {
+            color: #fff;
+        }
+
+        @media screen and (max-width:700px) {
+            table tr:nth-child(odd) {
                 background-color: #1a1a1a;
             }
 
-            table tr:nth-child(odd) {
-                background-color: #121212;
-            }
-
-            a {
-                color: #8ab4f8;
-            }
-
-            strong {
-                color: #fff;
-            }
-
-            @media screen and (max-width:700px) {
-                table tr:nth-child(odd) {
-                    background-color: #1a1a1a;
-                }
-
-                td::before {
-                    background-color: #000;
-                    color: #e0e0e0;
-                    border-right: 2px solid #444;
-                }
+            td::before {
+                background-color: #000;
+                color: #e0e0e0;
+                border-right: 2px solid #444;
             }
         }
+    }
     </style>
 {% endblock %}
 {% block script %}
