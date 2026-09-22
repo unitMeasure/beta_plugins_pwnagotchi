@@ -18,7 +18,7 @@ class auto_tune(plugins.Plugin):
     __author__ = 'Sniffleupagus'
     __github__ = 'https://github.com/Sniffleupagus/pwnagotchi_plugins/pull/32'
     __editor__ = 'avipars'
-    __version__ = '1.0.6'
+    __version__ = '1.0.6.1'
     __license__ = 'GPL3'
     __description__ = 'A plugin that adjust AUTO mode parameters'
 
@@ -160,8 +160,12 @@ class auto_tune(plugins.Plugin):
             ret += '<tr align=left><th>Parameter</th><th>Value</th><th>Description</th></tr>\n'
 
             for p in sorted(sec):
-                if type(sec[p]) in [int, str, float, bool]:
-                    cls = type(sec[p]).__name__.lower()
+                # Get the type name and lowercase it (e.g., 'int', 'str', 'float', 'bool')
+                type_name = type(sec[p]).__name__.lower()
+                
+                # Check if the type name matches our targets
+                if type_name in ('int', 'str', 'float', 'bool'):
+                    cls = type_name
                     iname = "newval,%s,%s,%s" % (sec[p], p, cls)
                     ret += "<tr align=left>"
                     if cls == "bool":
