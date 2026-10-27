@@ -1,6 +1,12 @@
 import logging, os, glob, pwnagotchi
 import pwnagotchi.plugins as plugins
-from flask import abort, send_from_directory, render_template_string, make_response, send_file
+from flask import (
+    abort,
+    send_from_directory,
+    render_template_string,
+    make_response,
+    send_file,
+)
 import zipfile
 
 TEMPLATE = """
@@ -131,17 +137,19 @@ TEMPLATE = """
 {% endblock %}
 """
 
+
 class Handshake:
     def __init__(self, name, path, ext):
         self.name = name
         self.path = path
         self.ext = ext
 
+
 class Uncracked(plugins.Plugin):
-    __author__ = 'NeonLightning'
-    __version__ = '1.0.7'
-    __license__ = 'GPL3'
-    __description__ = 'Download handshake not found in wpa-sec from web-ui.'
+    __author__ = "NeonLightning"
+    __version__ = "1.0.7"
+    __license__ = "GPL3"
+    __description__ = "Download handshake not found in wpa-sec from web-ui."
 
     def __init__(self):
         self.ready = False
@@ -154,11 +162,23 @@ class Uncracked(plugins.Plugin):
         self.ready = True
 
     def read_potfile(self):
-        potfile_path = os.path.join(self.config['bettercap']['handshakes'], "wpa-sec.cracked.potfile")
+        potfile_path = os.path.join(
+            self.config["bettercap"]["handshakes"], "wpa-sec.cracked.potfile"
+        )
         try:
-            with open(potfile_path, 'r') as file_in:
+            with open(potfile_path, "r") as file_in:
                 lines = file_in.readlines()
-            return set((line.split(":")[2].replace("_", "").replace(" ", "").replace(".", ""), line.split(":")[0]) for line in lines if line.strip())
+            return set(
+                (
+                    line.split(":")[2]
+                    .replace("_", "")
+                    .replace(" ", "")
+                    .replace(".", ""),
+                    line.split(":")[0],
+                )
+                for line in lines
+                if line.strip()
+            )
         except FileNotFoundError:
             logging.error("[Uncracked] potfile not found")
             return set()
@@ -169,59 +189,73 @@ class Uncracked(plugins.Plugin):
     def find_uncracked_handshakes(self, unique_lines):
         handshakes = []
         try:
-            for ext in ['.pcap', '.pcapng','.16800', '.22000']:
-                pcapfiles = glob.glob(os.path.join(self.config['bettercap']['handshakes'], f"*{ext}"))
+            for ext in [".pcap", ".pcapng", ".16800", ".22000"]:
+                pcapfiles = glob.glob(
+                    os.path.join(self.config["bettercap"]["handshakes"], f"*{ext}")
+                )
                 for path in pcapfiles:
-                    name = os.path.basename(path)[:-len(ext)]
-                    fullpathNoExt = path[:-len(ext)]
-                    parts = name.split('_')
+                    name = os.path.basename(path)[: -len(ext)]
+                    fullpathNoExt = path[: -len(ext)]
+                    parts = name.split("_")
                     if len(parts) < 2:
-                        continue 
+                        continue
                     ssid = parts[0]
                     bssid = parts[1]
-                    if not any(f"{potfile_ssid}_{potfile_bssid}" == f"{ssid}_{bssid}" for potfile_ssid, potfile_bssid in unique_lines):
+                    if not any(
+                        f"{potfile_ssid}_{potfile_bssid}" == f"{ssid}_{bssid}"
+                        for potfile_ssid, potfile_bssid in unique_lines
+                    ):
                         handshakes.append(Handshake(name, fullpathNoExt, [ext]))
             handshakes = sorted(handshakes, key=lambda x: x.name.lower())
         except Exception as e:
             logging.error(f"[Uncracked] error finding uncracked handshakes: {e}")
         return handshakes
-     
+
     def compress_and_send(self, extension=None):
         logging.info("[Uncracked] Compressing and sending")
-        directory_to_compress = self.config['bettercap']['handshakes']
+        directory_to_compress = self.config["bettercap"]["handshakes"]
         logging.debug(f"[Uncracked] Compressing and sending {directory_to_compress}")
         zip_suffix = f"_{extension}" if extension else ""
         zip_file_path = f"/tmp/handshakes{zip_suffix}.zip"
         logging.info(f"[Uncracked] Compressing and sending {zip_file_path}")
-        default_extensions = ['pcap','pcapng','22000', '16800']
-        extensions = extension.split(',') if extension else default_extensions
+        default_extensions = ["pcap", "pcapng", "22000", "16800"]
+        extensions = extension.split(",") if extension else default_extensions
         if os.path.exists(zip_file_path):
             os.remove(zip_file_path)
         try:
-            with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            with zipfile.ZipFile(zip_file_path, "w") as zipf:
                 for root, _, files in os.walk(directory_to_compress):
                     for file in files:
-                        file_extension = file.split('.')[-1]
+                        file_extension = file.split(".")[-1]
                         if file_extension in extensions:
                             file_path = os.path.join(root, file)
-                            ssid_bssid_ext = '.'.join(file.split('.')[:-1])
+                            ssid_bssid_ext = ".".join(file.split(".")[:-1])
                             if not self.is_in_potfile(ssid_bssid_ext):
-                                zipf.write(file_path, os.path.relpath(file_path, directory_to_compress))
-                                logging.debug(f"[Uncracked] Added file to zip archive: {file_path}")
+                                zipf.write(
+                                    file_path,
+                                    os.path.relpath(file_path, directory_to_compress),
+                                )
+                                logging.debug(
+                                    f"[Uncracked] Added file to zip archive: {file_path}"
+                                )
             logging.debug(f"[Uncracked] Added files to zip archive")
             response = make_response(send_file(zip_file_path, as_attachment=True))
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
+            response.headers[
+                "Cache-Control"
+            ] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
             return response
         except Exception as e:
             logging.error(f"[Uncracked] Error compressing and sending file: {e}")
             abort(500)
 
     def is_in_potfile(self, ssid_bssid_ext):
-        potfile_path = os.path.join(self.config['bettercap']['handshakes'], "wpa-sec.cracked.potfile")
+        potfile_path = os.path.join(
+            self.config["bettercap"]["handshakes"], "wpa-sec.cracked.potfile"
+        )
         try:
-            with open(potfile_path, 'r') as file_in:
+            with open(potfile_path, "r") as file_in:
                 lines = file_in.readlines()
             lines = [line.strip() for line in lines if line.strip()]
             for line in lines:
@@ -246,7 +280,9 @@ class Uncracked(plugins.Plugin):
                 logging.info(f"[Uncracked] Loaded webhook")
                 unique_lines = self.read_potfile()
                 data = self.find_uncracked_handshakes(unique_lines)
-                return render_template_string(TEMPLATE, title="Handshakes | " + pwnagotchi.name(), handshakes=data)
+                return render_template_string(
+                    TEMPLATE, title="Handshakes | " + pwnagotchi.name(), handshakes=data
+                )
             elif path == "download":
                 logging.debug("[Uncracked] Compressing and sending on webhook")
                 return self.compress_and_send()
@@ -270,13 +306,15 @@ class Uncracked(plugins.Plugin):
             abort(500)
 
     def serve_file(self, path):
-        dir = self.config['bettercap']['handshakes']
+        dir = self.config["bettercap"]["handshakes"]
         try:
             logging.info(f"[Uncracked] serving {dir}/{path}")
             response = send_from_directory(directory=dir, path=path, as_attachment=True)
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
+            response.headers[
+                "Cache-Control"
+            ] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
             return response
         except FileNotFoundError:
             logging.error(f"[Uncracked] file not found: {path}")
