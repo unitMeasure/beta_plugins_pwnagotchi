@@ -135,16 +135,16 @@ class Handshake:
 
 class UncrackedV2(plugins.Plugin):
     __author__ = 'NeonLightning'
-    __version__ = '1.0.5.1'
+    __version__ = '1.0.5.2'
     __license__ = 'GPL3'
-    __editor__ = "avipars" # added in pwncrack potfile
+    __editor__ = "avipars" # beta - want to add in pwncrack potfile
     __description__ = 'Download handshake not found in wpa-sec or pwncrack from web-ui.'
 
     def __init__(self):
         self.ready = False
 
     def on_loaded(self):
-        logging.info("[Uncracked] plugin loaded")
+        logging.info("[UncrackedV2] plugin loaded")
 
     def on_config_changed(self, config):
         self.config = config
@@ -164,10 +164,10 @@ class UncrackedV2(plugins.Plugin):
                 lines = file_in.readlines()
             return set((line.split(":")[2].replace("_", "").replace(" ", "").replace(".", ""), line.split(":")[0]) for line in lines if line.strip())
         except FileNotFoundError:
-            logging.error("[Uncracked] potfile not found")
+            logging.error("[UncrackedV2] potfile not found")
             return set()
         except Exception as e:
-            logging.error(f"[Uncracked] error reading potfile: {e}")
+            logging.error(f"[UncrackedV2] error reading potfile: {e}")
             return set()
 
     def find_uncracked_handshakes(self, unique_lines):
@@ -187,16 +187,16 @@ class UncrackedV2(plugins.Plugin):
                         handshakes.append(Handshake(name, fullpathNoExt, [ext]))
             handshakes = sorted(handshakes, key=lambda x: x.name.lower())
         except Exception as e:
-            logging.error(f"[Uncracked] error finding uncracked handshakes: {e}")
+            logging.error(f"[UncrackedV2] error finding uncracked handshakes: {e}")
         return handshakes
     
     def compress_and_send(self, extension=None):
-        logging.info("[Uncracked] Compressing and sending")
+        logging.info("[UncrackedV2] Compressing and sending")
         directory_to_compress = get_handshakes_dir(self)
-        logging.debug(f"[Uncracked] Compressing and sending {directory_to_compress}")
+        logging.debug(f"[UncrackedV2] Compressing and sending {directory_to_compress}")
         zip_suffix = f"_{extension}" if extension else ""
         zip_file_path = f"/tmp/handshakes{zip_suffix}.zip"
-        logging.info(f"[Uncracked] Compressing and sending {zip_file_path}")
+        logging.info(f"[UncrackedV2] Compressing and sending {zip_file_path}")
         default_extensions = ['pcap', '22000', '16800']
         extensions = extension.split(',') if extension else default_extensions
         if os.path.exists(zip_file_path):
@@ -211,15 +211,15 @@ class UncrackedV2(plugins.Plugin):
                             ssid_bssid_ext = '.'.join(file.split('.')[:-1])
                             if not self.is_in_potfile(ssid_bssid_ext):
                                 zipf.write(file_path, os.path.relpath(file_path, directory_to_compress))
-                                logging.debug(f"[Uncracked] Added file to zip archive: {file_path}")
-            logging.debug(f"[Uncracked] Added files to zip archive")
+                                logging.debug(f"[UncrackedV2] Added file to zip archive: {file_path}")
+            logging.debug(f"[UncrackedV2] Added files to zip archive")
             response = make_response(send_file(zip_file_path, as_attachment=True))
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
             return response
         except Exception as e:
-            logging.error(f"[Uncracked] Error compressing and sending file: {e}")
+            logging.error(f"[UncrackedV2] Error compressing and sending file: {e}")
             abort(500)
 
     def is_in_potfile(self, ssid_bssid_ext):
@@ -236,10 +236,10 @@ class UncrackedV2(plugins.Plugin):
                     return True
             return False
         except FileNotFoundError:
-            logging.error("[Uncracked] potfile not found")
+            logging.error("[UncrackedV2] potfile not found")
             return False
         except Exception as e:
-            logging.error(f"[Uncracked] error reading potfile: {e}")
+            logging.error(f"[UncrackedV2] error reading potfile: {e}")
             return False
 
     def on_webhook(self, path, request):
@@ -247,41 +247,41 @@ class UncrackedV2(plugins.Plugin):
             if not self.ready:
                 return "Plugin not ready"
             if path == "/" or not path:
-                logging.info(f"[Uncracked] Loaded webhook")
+                logging.info(f"[UncrackedV2] Loaded webhook")
                 unique_lines = self.read_potfile()
                 data = self.find_uncracked_handshakes(unique_lines)
                 return render_template_string(TEMPLATE, title="Handshakes | " + pwnagotchi.name(), handshakes=data)
             elif path == "download":
-                logging.debug("[Uncracked] Compressing and sending on webhook")
+                logging.debug("[UncrackedV2] Compressing and sending on webhook")
                 return self.compress_and_send()
             elif path == "download_22000":
-                logging.debug("[Uncracked] Compressing and sending 22000 on webhook")
+                logging.debug("[UncrackedV2] Compressing and sending 22000 on webhook")
                 return self.compress_and_send("22000")
             elif path == "download_pcap":
-                logging.debug("[Uncracked] Compressing and sending pcap on webhook")
+                logging.debug("[UncrackedV2] Compressing and sending pcap on webhook")
                 return self.compress_and_send("pcap")
             elif path == "download_16800":
-                logging.debug("[Uncracked] Compressing and sending 16800 on webhook")
+                logging.debug("[UncrackedV2] Compressing and sending 16800 on webhook")
                 return self.compress_and_send("16800")
             else:
-                logging.info(f"[Uncracked] serving {path}")
+                logging.info(f"[UncrackedV2] serving {path}")
                 return self.serve_file(path)
         except Exception as e:
-            logging.error(f"[Uncracked] error in webhook: {e}")
+            logging.error(f"[UncrackedV2] error in webhook: {e}")
             abort(500)
 
     def serve_file(self, path):
         dir = get_handshakes_dir(self)
         try:
-            logging.info(f"[Uncracked] serving {dir}/{path}")
+            logging.info(f"[UncrackedV2] serving {dir}/{path}")
             response = send_from_directory(directory=dir, path=path, as_attachment=True)
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Expires'] = '0'
             return response
         except FileNotFoundError:
-            logging.error(f"[Uncracked] file not found: {path}")
+            logging.error(f"[UncrackedV2] file not found: {path}")
             abort(404)
         except Exception as e:
-            logging.error(f"[Uncracked] error serving file: {e}")
+            logging.error(f"[UncrackedV2] error serving file: {e}")
             abort(500)
